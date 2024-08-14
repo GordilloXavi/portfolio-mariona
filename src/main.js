@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/Addons.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { Timer } from 'three/addons/misc/Timer.js'
 import GUI from 'lil-gui'
 import Stats from 'stats.js';
@@ -88,7 +88,7 @@ const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 
 camera.position.x = 0
 camera.position.y = 1
 camera.position.z = -3
-//scene.add(camera)
+camera.lookAt(0, 0.5, 0)
 
 
 /**
@@ -113,9 +113,108 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 
 // Controls
-const controls = new OrbitControls(camera, canvas)
-controls.enableDamping = true
-controls.target.set(0, 0.5, 0)
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
+const velocity = new THREE.Vector3();
+const direction = new THREE.Vector3();
+const controlParams = {
+    movementSpeed: 20,
+    velocityDecay: 0.1
+}
+
+gui.add(controlParams, 'movementSpeed', 1, 50)
+gui.add(controlParams, 'velocityDecay', 0.01, 5)
+
+
+const controls = new PointerLockControls( camera, document.body );
+controls.pointerSpeed = 0.8
+gui.add(controls, 'pointerSpeed', 0.25, 5)
+
+
+const blocker = document.getElementById( 'blocker' );
+const instructions = document.getElementById( 'instructions' );
+
+instructions.addEventListener( 'click', function () {
+    controls.lock();
+} );
+
+controls.addEventListener( 'lock', function () {
+    instructions.style.display = 'none';
+    blocker.style.display = 'none';
+} );
+
+controls.addEventListener( 'unlock', function () {
+    blocker.style.display = 'block';
+    instructions.style.display = '';
+} );
+
+scene.add( controls.getObject() );
+
+const onKeyDown = function ( event ) {
+    switch ( event.code ) {
+        case 'ArrowUp':
+        case 'KeyW':
+            moveForward = true;
+            break;
+
+        case 'ArrowLeft':
+        case 'KeyA':
+            moveLeft = true;
+            break;
+
+        case 'ArrowDown':
+        case 'KeyS':
+            moveBackward = true;
+            break;
+
+        case 'ArrowRight':
+        case 'KeyD':
+            moveRight = true;
+            break;
+    }
+};
+
+const onKeyUp = function ( event ) {
+    switch ( event.code ) {
+        case 'ArrowUp':
+        case 'KeyW':
+            moveForward = false;
+            break;
+
+        case 'ArrowLeft':
+        case 'KeyA':
+            moveLeft = false;
+            break;
+
+        case 'ArrowDown':
+        case 'KeyS':
+            moveBackward = false;
+            break;
+
+        case 'ArrowRight':
+        case 'KeyD':
+            moveRight = false;
+            break;
+    }
+};
+
+const onKeyPress = function (event) {
+    if (event.code === 'KeyF') {
+        if (!document.fullscreenElement) {
+            canvas.requestFulflscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    }
+}
+
+document.addEventListener( 'keydown', onKeyDown );
+document.addEventListener( 'keyup', onKeyUp );
+//document.addEventListener( 'keypress', onKeyPress);
+
+
 
 const timer = new Timer()
 
@@ -124,10 +223,22 @@ const tick = () =>
     stats.begin()
     // Timer
     timer.update()
-    const elapsedTime = timer.getElapsed()
+    const elapsedTime = timer.getDelta()
 
-    // Update controls
-    controls.update()
+    velocity.x -= velocity.x * elapsedTime * 1/controlParams.velocityDecay;
+	velocity.z -= velocity.z * elapsedTime * 1/controlParams.velocityDecay;
+
+    // Movement:
+    direction.z = Number( moveForward ) - Number( moveBackward )
+	direction.x = Number( moveRight ) - Number( moveLeft )
+    direction.normalize()
+
+    if ( moveForward || moveBackward ) velocity.z -= direction.z * elapsedTime;
+    if ( moveLeft || moveRight ) velocity.x -= direction.x * elapsedTime;
+
+    controls.moveRight( - velocity.x * elapsedTime * controlParams.movementSpeed );
+	controls.moveForward( - velocity.z * elapsedTime * controlParams.movementSpeed );
+
 
     // Render
     renderer.render(scene, camera)
