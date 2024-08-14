@@ -11,10 +11,6 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 // Debug
 const gui = new GUI()
 
-// Clock
-const clock = new THREE.Clock()
-
-
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
@@ -26,7 +22,26 @@ const stats = new Stats()
 stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
 
-// Scene
+// ###### Scene
+
+// Audio 
+const audioListener = new THREE.AudioListener();
+
+const sound = new THREE.PositionalAudio( audioListener );
+
+// load a sound and set it as the PositionalAudio object's buffer
+const audioLoader = new THREE.AudioLoader();
+audioLoader.load( 'sounds/music.mp3', function( buffer ) {
+	sound.setBuffer( buffer )
+	sound.setRefDistance( 1 )
+	sound.play()
+    sound.setLoop(true)
+    sound.setVolume(0.05)
+    //sound.setRolloffFactor(100)
+});
+//gui.add(sound, 'volume', 0.01, 1)
+
+// Environment
 const floorMaterial = new THREE.MeshStandardMaterial(0x555555)
 const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(100, 100, 100, 100),
@@ -38,7 +53,6 @@ floor.rotateX(-Math.PI/2)
 floor.receiveShadow = true
 scene.add(floor)
 gui.add(floorMaterial, 'wireframe')
-
 
 const pedestalMaterial = new THREE.MeshPhysicalMaterial()
 pedestalMaterial.color = new THREE.Color() //(0xeeffef)
@@ -56,8 +70,8 @@ pedestal.castShadow = true
 pedestal.receiveShadow = true
 pedestal.position.y = 0
 
+pedestal.add( sound );
 scene.add(pedestal)
-
 
 /**
  * Lights
@@ -208,6 +222,8 @@ camera.position.x = 0
 camera.position.y = 0.8
 camera.position.z = -2.5
 camera.lookAt(0, 0.5, 0)
+camera.add( audioListener );
+
 
 /**
  * Renderer
@@ -332,11 +348,18 @@ const onKeyPress = function (event) {
             document.exitFullscreen()
         }
     }
+    else if (event.code === 'KeyM') {
+        if (sound.isPlaying) {
+            sound.pause()
+        } else {
+            sound.play()
+        }
+    }
 }
 
 document.addEventListener( 'keydown', onKeyDown )
 document.addEventListener( 'keyup', onKeyUp )
-//document.addEventListener( 'keypress', onKeyPress)
+document.addEventListener( 'keypress', onKeyPress)
 
 window.addEventListener('dblclick', () => {
     if (!document.fullscreenElement) {
