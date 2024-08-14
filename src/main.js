@@ -1,9 +1,8 @@
 import * as THREE from 'three'
-import { FirstPersonControls } from 'three/examples/jsm/Addons.js';
+import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import { Timer } from 'three/addons/misc/Timer.js'
 import GUI from 'lil-gui'
 import Stats from 'stats.js';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 /**
@@ -32,26 +31,37 @@ document.body.appendChild(stats.dom);
  * Lights
  */
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xaaaaaa, 3)
+const ambientLight = new THREE.AmbientLight(0xffffff, 3)
 scene.add(ambientLight)
 
-/*
-const loader = new FBXLoader()
-loader.load('./models/road.fbx', (object) => {
-    console.log("loaded object!!")
-    scene.add(object)
-}, undefined, (error) => {
-    console.error('Error loading FBX model:', error)
-})
-*/
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
+directionalLight.lookAt(1, -1, 0)
+scene.add(directionalLight)
+
 
 let model
 const gltf_loader = new GLTFLoader();
 gltf_loader.load('/models/look_1.glb', function(gltf) {
+
+    //const box = new THREE.Box3().setFromObject(model);
+    /*
+        const center = box.getCenter(new THREE.Vector3());
+
+        // Translate the model so the center of the bounding box is at (0, 0, 0)
+        model.position.sub(center);
+
+        // Rotate the model around the X-axis
+        model.rotateX(Math.PI / 4);
+
+        // Move the model back to its original position
+        model.position.add(center);
+        */
+
+
     model = gltf.scene;
     model.scale.set(5, 5, 5)
     model.rotateZ(Math.PI/2)
-    model.position.set(2, 0.5, 0)
+    model.position.set(1.9, 0.56, 0.6)
     model.rotateX(-Math.PI/10)
 
     const boxHelper = new THREE.BoxHelper(model, 0xffff00); // Yellow bounding box
@@ -59,16 +69,6 @@ gltf_loader.load('/models/look_1.glb', function(gltf) {
 
     scene.add(model)
 })
-
-gltf_loader.load('/models/krimson_city_sewers/scene.gltf', function(gltf) {
-    model = gltf.scene;
-
-    //const boxHelper = new THREE.BoxHelper(model, 0xffff00); // Yellow bounding box
-    //scene.add(boxHelper);
-
-    scene.add(model)
-})
-
 
 /**
  * Sizes
@@ -79,7 +79,7 @@ const sizes = {
 }
 
 // Add GridHelper to the scene
-const gridHelper = new THREE.GridHelper(10, 10); // size = 10 units, divisions = 10
+const gridHelper = new THREE.GridHelper(50, 50); // size = 10 units, divisions = 10
 scene.add(gridHelper);
 
 window.addEventListener('resize', () =>
@@ -100,10 +100,9 @@ window.addEventListener('resize', () =>
 /**
  * Camera
  */
-// Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 500)
+const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 500)
 camera.position.x = 0
-camera.position.y = 1
+camera.position.y = 0
 camera.position.z = -3
 camera.lookAt(0, 0, 0);
 scene.add(camera)
@@ -113,28 +112,27 @@ scene.add(camera)
  * Renderer
  */
 const renderer = new THREE.WebGLRenderer({
-    canvas: canvas
+    canvas: canvas,
+    antialias: true,
+    toneMapping: THREE.NoToneMapping
 })
+
+gui.add(renderer, 'toneMapping', {
+    No: THREE.NoToneMapping,
+    Linear: THREE.LinearToneMapping,
+    Reinhard: THREE.ReinhardToneMapping,
+    Cineon: THREE.CineonToneMapping,
+    ACESFilmic: THREE.ACESFilmicToneMapping
+})
+
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 
 // Controls
-const controls = new FirstPersonControls( camera, renderer.domElement );
-controls.movementSpeed = 3;
-controls.lookSpeed = 0.15;
+const controls = new OrbitControls(camera, canvas)
 
-/**
- * Fog
- */
-// scene.fog = new THREE.Fog('#04343f', 1, 13)
-// scene.fog = new THREE.FogExp2('#04343f', 0.1)
-
-/**
- * Animate
- */
 const timer = new Timer()
-let last_elapsed = timer.getElapsed()
 
 const tick = () =>
 {
@@ -144,7 +142,7 @@ const tick = () =>
     const elapsedTime = timer.getElapsed()
 
     // Update controls
-    controls.update( clock.getDelta() );
+    controls.update()
 
     // Render
     renderer.render(scene, camera)
