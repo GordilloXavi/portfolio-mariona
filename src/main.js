@@ -41,28 +41,12 @@ scene.add(directionalLight)
 
 let model
 const gltf_loader = new GLTFLoader();
-gltf_loader.load('/models/look_1.glb', function(gltf) {
-
-    //const box = new THREE.Box3().setFromObject(model);
-    /*
-        const center = box.getCenter(new THREE.Vector3());
-
-        // Translate the model so the center of the bounding box is at (0, 0, 0)
-        model.position.sub(center);
-
-        // Rotate the model around the X-axis
-        model.rotateX(Math.PI / 4);
-
-        // Move the model back to its original position
-        model.position.add(center);
-        */
-
+gltf_loader.load('/models/look_1_leg.glb', function(gltf) {
 
     model = gltf.scene;
-    model.scale.set(5, 5, 5)
-    model.rotateZ(Math.PI/2)
-    model.position.set(1.9, 0.56, 0.6)
-    model.rotateX(-Math.PI/10)
+    model.scale.set(2, 2, 2)
+    model.position.set(0, -0.165, 0)
+    model.rotateY(Math.PI)
 
     const boxHelper = new THREE.BoxHelper(model, 0xffff00); // Yellow bounding box
     scene.add(boxHelper);
@@ -102,10 +86,9 @@ window.addEventListener('resize', () =>
  */
 const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 500)
 camera.position.x = 0
-camera.position.y = 0
+camera.position.y = 1
 camera.position.z = -3
-camera.lookAt(0, 0, 0);
-scene.add(camera)
+//scene.add(camera)
 
 
 /**
@@ -131,6 +114,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 // Controls
 const controls = new OrbitControls(camera, canvas)
+controls.enableDamping = true
+controls.target.set(0, 0.5, 0)
 
 const timer = new Timer()
 
