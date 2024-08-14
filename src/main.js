@@ -12,6 +12,10 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 // Debug
 const gui = new GUI()
 
+// Clock
+const clock = new THREE.Clock();
+
+
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
@@ -28,7 +32,7 @@ document.body.appendChild(stats.dom);
  * Lights
  */
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xaaaaaa, 1)
+const ambientLight = new THREE.AmbientLight(0xaaaaaa, 3)
 scene.add(ambientLight)
 
 /*
@@ -117,8 +121,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 // Controls
 const controls = new FirstPersonControls( camera, renderer.domElement );
-controls.movementSpeed = 1;
-controls.lookSpeed = 0.05;
+controls.movementSpeed = 3;
+controls.lookSpeed = 0.15;
 
 /**
  * Fog
@@ -130,6 +134,7 @@ controls.lookSpeed = 0.05;
  * Animate
  */
 const timer = new Timer()
+let last_elapsed = timer.getElapsed()
 
 const tick = () =>
 {
@@ -139,7 +144,7 @@ const tick = () =>
     const elapsedTime = timer.getElapsed()
 
     // Update controls
-    controls.update( elapsedTime/100 );
+    controls.update( clock.getDelta() );
 
     // Render
     renderer.render(scene, camera)
