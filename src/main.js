@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { Timer } from 'three/addons/misc/Timer.js'
 import GUI from 'lil-gui'
-import Stats from 'stats.js';
+import Stats from 'stats.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 /**
@@ -12,7 +12,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 const gui = new GUI()
 
 // Clock
-const clock = new THREE.Clock();
+const clock = new THREE.Clock()
 
 
 // Canvas
@@ -22,19 +22,40 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
 // Initialize stats to show FPS
-const stats = new Stats();
-stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-document.body.appendChild(stats.dom);
+const stats = new Stats()
+stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild(stats.dom)
+
+// Scene
+const floorMaterial = new THREE.MeshStandardMaterial(0x555555)
+const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(10, 10, 100, 100),
+    floorMaterial
+)
+floor.rotateX(-Math.PI/2)
+floor.receiveShadow = true
+scene.add(floor)
+gui.add(floorMaterial, 'wireframe')
 
 
 /**
  * Lights
  */
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 3)
+const ambientLight = new THREE.AmbientLight(0xffffff, 1)
 scene.add(ambientLight)
 
-const spotLight = new THREE.SpotLight(0xff0000, 20)
+const spotLight = new THREE.SpotLight(0x22ff22, 5)
+spotLight.angle = Math.PI / 7
+spotLight.castShadow = true;
+spotLight.shadow.mapSize.width = 1024;
+spotLight.shadow.mapSize.height = 1024;
+
+//spotLight.shadow.camera.near = 500;
+//spotLight.shadow.camera.far = 4000;
+//spotLight.shadow.camera.fov = 30;
+
+spotLight.penumbra = 0.1
 spotLight.position.set(0.5, 2, 0)
 spotLight.lookAt(0, 0, 0)
 //spotLight.camera.far = 5
@@ -47,13 +68,23 @@ scene.add(spotLightHelper)
 let model
 const gltf_loader = new GLTFLoader();
 gltf_loader.load('/models/look_1_leg.glb', function(gltf) {
-    model = gltf.scene;
+    model = gltf.scene
+
+    model.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true
+            child.receiveShadow = true
+            const geometry = child.geometry
+            geometry.computeVertexNormals() // Calculate normals
+        }
+    });
+
     model.scale.set(2, 2, 2)
     model.position.set(0, -0.165, 0)
     model.rotateY(Math.PI)
 
-    const boxHelper = new THREE.BoxHelper(model, 0xffff00); // Yellow bounding box
-    scene.add(boxHelper);
+    const boxHelper = new THREE.BoxHelper(model, 0xffff00) // Yellow bounding box
+    scene.add(boxHelper)
 
     scene.add(model)
 })
@@ -67,8 +98,8 @@ const sizes = {
 }
 
 // Add GridHelper to the scene
-const gridHelper = new THREE.GridHelper(50, 50); // size = 10 units, divisions = 10
-scene.add(gridHelper);
+const gridHelper = new THREE.GridHelper(50, 50) // size = 10 units, divisions = 10
+scene.add(gridHelper)
 
 window.addEventListener('resize', () =>
 {
@@ -90,10 +121,9 @@ window.addEventListener('resize', () =>
  */
 const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 500)
 camera.position.x = 0
-camera.position.y = 1
-camera.position.z = -3
+camera.position.y = 0.8
+camera.position.z = -2.5
 camera.lookAt(0, 0.5, 0)
-
 
 /**
  * Renderer
@@ -102,8 +132,9 @@ const renderer = new THREE.WebGLRenderer({
     canvas: canvas,
     antialias: true,
 })
-renderer.toneMapping = THREE.ACESFilmicToneMapping
+renderer.shadowMap.enabled = true
 
+renderer.toneMapping = THREE.ACESFilmicToneMapping
 
 gui.add(renderer, 'toneMapping', {
     ACESFilmic: THREE.ACESFilmicToneMapping,
@@ -118,12 +149,12 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 
 // Controls
-let moveForward = false;
-let moveBackward = false;
-let moveLeft = false;
-let moveRight = false;
-const velocity = new THREE.Vector3();
-const direction = new THREE.Vector3();
+let moveForward = false
+let moveBackward = false
+let moveLeft = false
+let moveRight = false
+const velocity = new THREE.Vector3()
+const direction = new THREE.Vector3()
 const controlParams = {
     movementSpeed: 20,
     velocityDecay: 0.1
@@ -133,91 +164,93 @@ gui.add(controlParams, 'movementSpeed', 1, 50)
 gui.add(controlParams, 'velocityDecay', 0.01, 5)
 
 
-const controls = new PointerLockControls( camera, document.body );
+const controls = new PointerLockControls( camera, document.body )
 controls.pointerSpeed = 0.8
 gui.add(controls, 'pointerSpeed', 0.25, 5)
 
 
-const blocker = document.getElementById( 'blocker' );
-const instructions = document.getElementById( 'instructions' );
+const blocker = document.getElementById( 'blocker' )
+const instructions = document.getElementById( 'instructions' )
 
 instructions.addEventListener( 'click', function () {
-    controls.lock();
-} );
+    controls.lock()
+} )
 
 controls.addEventListener( 'lock', function () {
-    instructions.style.display = 'none';
-    blocker.style.display = 'none';
-} );
+    instructions.style.display = 'none'
+    blocker.style.display = 'none'
+    gui.hide()
+} )
 
 controls.addEventListener( 'unlock', function () {
-    blocker.style.display = 'block';
-    instructions.style.display = '';
-} );
+    blocker.style.display = 'block'
+    instructions.style.display = ''
+    gui.show()
+} )
 
-scene.add( controls.getObject() );
+scene.add( controls.getObject() )
 
 const onKeyDown = function ( event ) {
     switch ( event.code ) {
         case 'ArrowUp':
         case 'KeyW':
-            moveForward = true;
-            break;
+            moveForward = true
+            break
 
         case 'ArrowLeft':
         case 'KeyA':
-            moveLeft = true;
-            break;
+            moveLeft = true
+            break
 
         case 'ArrowDown':
         case 'KeyS':
-            moveBackward = true;
-            break;
+            moveBackward = true
+            break
 
         case 'ArrowRight':
         case 'KeyD':
-            moveRight = true;
-            break;
+            moveRight = true
+            break
     }
-};
+}
 
 const onKeyUp = function ( event ) {
     switch ( event.code ) {
         case 'ArrowUp':
         case 'KeyW':
-            moveForward = false;
-            break;
+            moveForward = false
+            break
 
         case 'ArrowLeft':
         case 'KeyA':
-            moveLeft = false;
-            break;
+            moveLeft = false
+            break
 
         case 'ArrowDown':
         case 'KeyS':
-            moveBackward = false;
-            break;
+            moveBackward = false
+            break
 
         case 'ArrowRight':
         case 'KeyD':
-            moveRight = false;
-            break;
+            moveRight = false
+            break
     }
-};
+}
 
 const onKeyPress = function (event) {
     if (event.code === 'KeyF') {
         if (!document.fullscreenElement) {
-            canvas.requestFulflscreen();
+            canvas.requestFulflscreen()
         } else {
-            document.exitFullscreen();
+            document.exitFullscreen()
         }
     }
 }
 
-document.addEventListener( 'keydown', onKeyDown );
-document.addEventListener( 'keyup', onKeyUp );
-//document.addEventListener( 'keypress', onKeyPress);
+document.addEventListener( 'keydown', onKeyDown )
+document.addEventListener( 'keyup', onKeyUp )
+//document.addEventListener( 'keypress', onKeyPress)
 
 
 
@@ -230,19 +263,19 @@ const tick = () =>
     timer.update()
     const elapsedTime = timer.getDelta()
 
-    velocity.x -= velocity.x * elapsedTime * 1/controlParams.velocityDecay;
-	velocity.z -= velocity.z * elapsedTime * 1/controlParams.velocityDecay;
+    velocity.x -= velocity.x * elapsedTime * 1/controlParams.velocityDecay
+	velocity.z -= velocity.z * elapsedTime * 1/controlParams.velocityDecay
 
     // Movement:
     direction.z = Number( moveForward ) - Number( moveBackward )
 	direction.x = Number( moveRight ) - Number( moveLeft )
     direction.normalize()
 
-    if ( moveForward || moveBackward ) velocity.z -= direction.z * elapsedTime;
-    if ( moveLeft || moveRight ) velocity.x -= direction.x * elapsedTime;
+    if ( moveForward || moveBackward ) velocity.z -= direction.z * elapsedTime
+    if ( moveLeft || moveRight ) velocity.x -= direction.x * elapsedTime
 
-    controls.moveRight( - velocity.x * elapsedTime * controlParams.movementSpeed );
-	controls.moveForward( - velocity.z * elapsedTime * controlParams.movementSpeed );
+    controls.moveRight( - velocity.x * elapsedTime * controlParams.movementSpeed )
+	controls.moveForward( - velocity.z * elapsedTime * controlParams.movementSpeed )
 
 
     // Render
