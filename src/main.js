@@ -29,7 +29,7 @@ document.body.appendChild(stats.dom)
 // Scene
 const floorMaterial = new THREE.MeshStandardMaterial(0x555555)
 const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(10, 10, 100, 100),
+    new THREE.PlaneGeometry(100, 100, 100, 100),
     floorMaterial
 )
 floor.rotateX(-Math.PI/2)
@@ -44,7 +44,7 @@ gui.add(floorMaterial, 'wireframe')
 const lightsGUIFolder = gui.addFolder( 'Lights' );
 
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.25)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0)
 scene.add(ambientLight)
 
 lightsGUIFolder.add(ambientLight, 'intensity', 0, 3)
@@ -63,16 +63,13 @@ spotLightR.shadow.camera.near = 1
 spotLightR.shadow.camera.far = 5
 spotLightR.shadow.camera.fov = 30
 const spotLightRCameraHelper = new THREE.CameraHelper(spotLightR.shadow.camera)
-scene.add(spotLightRCameraHelper)
+//scene.add(spotLightRCameraHelper)
 
 spotLightR.penumbra = 0.4
 spotLightR.position.set(-0.9, 1.2, 0)
 spotLightR.target = spotLightTargetObject
-//const spotLightRHelper = new THREE.SpotLightHelper(spotLightR)
 
 scene.add(spotLightR)
-//scene.add(spotLightRHelper)
-
 
 const spotLightL = new THREE.SpotLight(0xffffff, 3)
 
@@ -85,17 +82,54 @@ spotLightL.shadow.camera.near = 1
 spotLightL.shadow.camera.far = 5
 spotLightL.shadow.camera.fov = 30
 const spotLightLCameraHelper = new THREE.CameraHelper(spotLightL.shadow.camera)
-scene.add(spotLightLCameraHelper)
+//scene.add(spotLightLCameraHelper)
 
 
 spotLightL.penumbra = 0.4
 spotLightL.position.set(0.9, 1.2, 0)
 spotLightL.target = spotLightTargetObject
-//const spotLightLHelper = new THREE.SpotLightHelper(spotLightL)
 
 scene.add(spotLightL)
-//scene.add(spotLightLHelper)
 
+const spotLightF = new THREE.SpotLight(0xffffff, 3)
+
+spotLightF.angle = Math.PI / 5
+spotLightF.castShadow = true
+spotLightF.shadow.mapSize.width = 512
+spotLightF.shadow.mapSize.height = 512
+
+spotLightF.shadow.camera.near = 1
+spotLightF.shadow.camera.far = 5
+spotLightF.shadow.camera.fov = 30
+const spotLightFCameraHelper = new THREE.CameraHelper(spotLightF.shadow.camera)
+//scene.add(spotLightFCameraHelper)
+
+
+spotLightF.penumbra = 0.4
+spotLightF.position.set(0, 1.2, 0.9)
+spotLightF.target = spotLightTargetObject
+
+scene.add(spotLightF)
+
+const spotLightB = new THREE.SpotLight(0xffffff, 3)
+
+spotLightB.angle = Math.PI / 5
+spotLightB.castShadow = true
+spotLightB.shadow.mapSize.width = 512
+spotLightB.shadow.mapSize.height = 512
+
+spotLightB.shadow.camera.near = 1
+spotLightB.shadow.camera.far = 5
+spotLightB.shadow.camera.fov = 30
+const spotLightBCameraHelper = new THREE.CameraHelper(spotLightB.shadow.camera)
+//scene.add(spotLightBCameraHelper)
+
+
+spotLightB.penumbra = 0.4
+spotLightB.position.set(0, 1.2, -0.9)
+spotLightB.target = spotLightTargetObject
+
+scene.add(spotLightB)
 
 let model
 const gltf_loader = new GLTFLoader();
@@ -127,8 +161,8 @@ const sizes = {
 }
 
 // Add GridHelper to the scene
-const gridHelper = new THREE.GridHelper(50, 50) // size = 10 units, divisions = 10
-scene.add(gridHelper)
+const gridHelper = new THREE.GridHelper(50, 50)
+//scene.add(gridHelper)
 
 window.addEventListener('resize', () =>
 {
@@ -283,6 +317,13 @@ document.addEventListener( 'keydown', onKeyDown )
 document.addEventListener( 'keyup', onKeyUp )
 //document.addEventListener( 'keypress', onKeyPress)
 
+window.addEventListener('dblclick', () => {
+    if (!document.fullscreenElement) {
+        canvas.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+});
 
 
 const timer = new Timer()
