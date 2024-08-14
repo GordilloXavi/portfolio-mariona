@@ -44,28 +44,30 @@ gui.add(floorMaterial, 'wireframe')
 const lightsGUIFolder = gui.addFolder( 'Lights' );
 
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.25)
 scene.add(ambientLight)
 
 lightsGUIFolder.add(ambientLight, 'intensity', 0, 3)
 
-
+const spotLightTargetObject = new THREE.Object3D();
+spotLightTargetObject.position.set(0, 0.5, 0)
+scene.add(spotLightTargetObject)
 const spotLightR = new THREE.SpotLight(0xffffff, 3)
 
-spotLightR.angle = Math.PI / 7
+spotLightR.angle = Math.PI / 5
 spotLightR.castShadow = true;
 spotLightR.shadow.mapSize.width = 512
 spotLightR.shadow.mapSize.height = 512
 
 spotLightR.shadow.camera.near = 1
-spotLightR.shadow.camera.far = 3
+spotLightR.shadow.camera.far = 5
 spotLightR.shadow.camera.fov = 30
 const spotLightRCameraHelper = new THREE.CameraHelper(spotLightR.shadow.camera)
 scene.add(spotLightRCameraHelper)
 
 spotLightR.penumbra = 0.4
-spotLightR.position.set(-0.7, 2, 0)
-spotLightR.lookAt(0, 0, 0)
+spotLightR.position.set(-0.9, 1.2, 0)
+spotLightR.target = spotLightTargetObject
 //const spotLightRHelper = new THREE.SpotLightHelper(spotLightR)
 
 scene.add(spotLightR)
@@ -74,21 +76,21 @@ scene.add(spotLightR)
 
 const spotLightL = new THREE.SpotLight(0xffffff, 3)
 
-spotLightL.angle = Math.PI / 7
+spotLightL.angle = Math.PI / 5
 spotLightL.castShadow = true
 spotLightL.shadow.mapSize.width = 512
 spotLightL.shadow.mapSize.height = 512
 
 spotLightL.shadow.camera.near = 1
-spotLightL.shadow.camera.far = 3
+spotLightL.shadow.camera.far = 5
 spotLightL.shadow.camera.fov = 30
 const spotLightLCameraHelper = new THREE.CameraHelper(spotLightL.shadow.camera)
 scene.add(spotLightLCameraHelper)
 
 
 spotLightL.penumbra = 0.4
-spotLightL.position.set(0.7, 2, 0)
-spotLightL.lookAt(0, 0, 0)
+spotLightL.position.set(0.9, 1.2, 0)
+spotLightL.target = spotLightTargetObject
 //const spotLightLHelper = new THREE.SpotLightHelper(spotLightL)
 
 scene.add(spotLightL)
@@ -112,9 +114,6 @@ gltf_loader.load('/models/look_1_leg.glb', function(gltf) {
     model.scale.set(2, 2, 2)
     model.position.set(0, -0.165, 0)
     model.rotateY(Math.PI)
-
-    const boxHelper = new THREE.BoxHelper(model, 0xffff00) // Yellow bounding box
-    scene.add(boxHelper)
 
     scene.add(model)
 })
