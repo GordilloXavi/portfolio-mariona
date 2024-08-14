@@ -32,10 +32,31 @@ const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(100, 100, 100, 100),
     floorMaterial
 )
+floor.metalness = 1
+floor.roughness = 0
 floor.rotateX(-Math.PI/2)
 floor.receiveShadow = true
 scene.add(floor)
 gui.add(floorMaterial, 'wireframe')
+
+
+const pedestalMaterial = new THREE.MeshPhysicalMaterial()
+pedestalMaterial.color = new THREE.Color() //(0xeeffef)
+pedestalMaterial.metalness = 0
+pedestalMaterial.roughness = 0.15
+pedestalMaterial.transmission = 1
+pedestalMaterial.ior = 1.7
+pedestalMaterial.thickness = 0.9
+
+const pedestal = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 0.5, 0.5),
+    pedestalMaterial
+)
+pedestal.castShadow = true
+pedestal.receiveShadow = true
+pedestal.position.y = 0
+
+scene.add(pedestal)
 
 
 /**
@@ -50,23 +71,23 @@ scene.add(ambientLight)
 lightsGUIFolder.add(ambientLight, 'intensity', 0, 3)
 
 const spotLightTargetObject = new THREE.Object3D();
-spotLightTargetObject.position.set(0, 0.5, 0)
+spotLightTargetObject.position.set(0, 1, 0)
 scene.add(spotLightTargetObject)
 const spotLightR = new THREE.SpotLight(0xffffff, 3)
 
 spotLightR.angle = Math.PI / 5
 spotLightR.castShadow = true;
-spotLightR.shadow.mapSize.width = 512
-spotLightR.shadow.mapSize.height = 512
+spotLightR.shadow.mapSize.width = 1024
+spotLightR.shadow.mapSize.height = 1024
 
 spotLightR.shadow.camera.near = 1
-spotLightR.shadow.camera.far = 5
+spotLightR.shadow.camera.far = 7
 spotLightR.shadow.camera.fov = 30
 const spotLightRCameraHelper = new THREE.CameraHelper(spotLightR.shadow.camera)
 //scene.add(spotLightRCameraHelper)
 
 spotLightR.penumbra = 0.4
-spotLightR.position.set(-0.9, 1.2, 0)
+spotLightR.position.set(-0.9, 1.4, 0)
 spotLightR.target = spotLightTargetObject
 
 scene.add(spotLightR)
@@ -75,18 +96,18 @@ const spotLightL = new THREE.SpotLight(0xffffff, 3)
 
 spotLightL.angle = Math.PI / 5
 spotLightL.castShadow = true
-spotLightL.shadow.mapSize.width = 512
-spotLightL.shadow.mapSize.height = 512
+spotLightL.shadow.mapSize.width = 1024
+spotLightL.shadow.mapSize.height = 1024
 
 spotLightL.shadow.camera.near = 1
-spotLightL.shadow.camera.far = 5
+spotLightL.shadow.camera.far = 7
 spotLightL.shadow.camera.fov = 30
 const spotLightLCameraHelper = new THREE.CameraHelper(spotLightL.shadow.camera)
 //scene.add(spotLightLCameraHelper)
 
 
 spotLightL.penumbra = 0.4
-spotLightL.position.set(0.9, 1.2, 0)
+spotLightL.position.set(0.9, 1.4, 0)
 spotLightL.target = spotLightTargetObject
 
 scene.add(spotLightL)
@@ -95,18 +116,18 @@ const spotLightF = new THREE.SpotLight(0xffffff, 3)
 
 spotLightF.angle = Math.PI / 5
 spotLightF.castShadow = true
-spotLightF.shadow.mapSize.width = 512
-spotLightF.shadow.mapSize.height = 512
+spotLightF.shadow.mapSize.width = 1024
+spotLightF.shadow.mapSize.height = 1024
 
 spotLightF.shadow.camera.near = 1
-spotLightF.shadow.camera.far = 5
+spotLightF.shadow.camera.far = 7
 spotLightF.shadow.camera.fov = 30
 const spotLightFCameraHelper = new THREE.CameraHelper(spotLightF.shadow.camera)
 //scene.add(spotLightFCameraHelper)
 
 
 spotLightF.penumbra = 0.4
-spotLightF.position.set(0, 1.2, 0.9)
+spotLightF.position.set(0, 1.4, 0.9)
 spotLightF.target = spotLightTargetObject
 
 scene.add(spotLightF)
@@ -115,18 +136,18 @@ const spotLightB = new THREE.SpotLight(0xffffff, 3)
 
 spotLightB.angle = Math.PI / 5
 spotLightB.castShadow = true
-spotLightB.shadow.mapSize.width = 512
-spotLightB.shadow.mapSize.height = 512
+spotLightB.shadow.mapSize.width = 1024
+spotLightB.shadow.mapSize.height = 1024
 
 spotLightB.shadow.camera.near = 1
-spotLightB.shadow.camera.far = 5
+spotLightB.shadow.camera.far = 7
 spotLightB.shadow.camera.fov = 30
 const spotLightBCameraHelper = new THREE.CameraHelper(spotLightB.shadow.camera)
 //scene.add(spotLightBCameraHelper)
 
 
 spotLightB.penumbra = 0.4
-spotLightB.position.set(0, 1.2, -0.9)
+spotLightB.position.set(0, 1.4, -0.9)
 spotLightB.target = spotLightTargetObject
 
 scene.add(spotLightB)
@@ -146,7 +167,7 @@ gltf_loader.load('/models/look_1_leg.glb', function(gltf) {
     });
 
     model.scale.set(2, 2, 2)
-    model.position.set(0, -0.165, 0)
+    model.position.set(0, 0.25 -0.165, 0)
     model.rotateY(Math.PI)
 
     scene.add(model)
