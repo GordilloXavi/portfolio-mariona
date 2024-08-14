@@ -41,25 +41,30 @@ gui.add(floorMaterial, 'wireframe')
 /**
  * Lights
  */
+const lightsGUIFolder = gui.addFolder( 'Lights' );
+
 // Ambient light
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
 scene.add(ambientLight)
+
+lightsGUIFolder.add(ambientLight, 'intensity', 0, 3)
+
 
 const spotLightR = new THREE.SpotLight(0xffffff, 3)
 
 spotLightR.angle = Math.PI / 7
 spotLightR.castShadow = true;
-spotLightR.shadow.mapSize.width = 1024;
-spotLightR.shadow.mapSize.height = 1024;
+spotLightR.shadow.mapSize.width = 512
+spotLightR.shadow.mapSize.height = 512
 
-spotLightR.shadow.camera.near = 1;
-spotLightR.shadow.camera.far = 3;
-spotLightR.shadow.camera.fov = 30;
+spotLightR.shadow.camera.near = 1
+spotLightR.shadow.camera.far = 3
+spotLightR.shadow.camera.fov = 30
 const spotLightRCameraHelper = new THREE.CameraHelper(spotLightR.shadow.camera)
 scene.add(spotLightRCameraHelper)
 
-spotLightR.penumbra = 0.1
-spotLightR.position.set(-0.5, 2, 0)
+spotLightR.penumbra = 0.4
+spotLightR.position.set(-0.7, 2, 0)
 spotLightR.lookAt(0, 0, 0)
 //const spotLightRHelper = new THREE.SpotLightHelper(spotLightR)
 
@@ -70,19 +75,19 @@ scene.add(spotLightR)
 const spotLightL = new THREE.SpotLight(0xffffff, 3)
 
 spotLightL.angle = Math.PI / 7
-spotLightL.castShadow = true;
-spotLightL.shadow.mapSize.width = 512;
-spotLightL.shadow.mapSize.height = 512;
+spotLightL.castShadow = true
+spotLightL.shadow.mapSize.width = 512
+spotLightL.shadow.mapSize.height = 512
 
-spotLightL.shadow.camera.near = 1;
-spotLightL.shadow.camera.far = 3;
-spotLightL.shadow.camera.fov = 30;
+spotLightL.shadow.camera.near = 1
+spotLightL.shadow.camera.far = 3
+spotLightL.shadow.camera.fov = 30
 const spotLightLCameraHelper = new THREE.CameraHelper(spotLightL.shadow.camera)
 scene.add(spotLightLCameraHelper)
 
 
-spotLightL.penumbra = 0.1
-spotLightL.position.set(0.5, 2, 0)
+spotLightL.penumbra = 0.4
+spotLightL.position.set(0.7, 2, 0)
 spotLightL.lookAt(0, 0, 0)
 //const spotLightLHelper = new THREE.SpotLightHelper(spotLightL)
 
@@ -174,6 +179,8 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 
 // Controls
+const controlsGUIFolder = gui.addFolder('controls')
+
 let moveForward = false
 let moveBackward = false
 let moveLeft = false
@@ -185,13 +192,13 @@ const controlParams = {
     velocityDecay: 0.1
 }
 
-gui.add(controlParams, 'movementSpeed', 1, 50)
-gui.add(controlParams, 'velocityDecay', 0.01, 5)
+controlsGUIFolder.add(controlParams, 'movementSpeed', 1, 50)
+controlsGUIFolder.add(controlParams, 'velocityDecay', 0.01, 5)
 
 
 const controls = new PointerLockControls( camera, document.body )
 controls.pointerSpeed = 0.8
-gui.add(controls, 'pointerSpeed', 0.25, 5)
+controlsGUIFolder.add(controls, 'pointerSpeed', 0.25, 5)
 
 
 const blocker = document.getElementById( 'blocker' )
