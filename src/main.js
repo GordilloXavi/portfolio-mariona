@@ -34,15 +34,19 @@ document.body.appendChild(stats.dom);
 const ambientLight = new THREE.AmbientLight(0xffffff, 3)
 scene.add(ambientLight)
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
-directionalLight.lookAt(1, -1, 0)
-scene.add(directionalLight)
+const spotLight = new THREE.SpotLight(0xff0000, 20)
+spotLight.position.set(0.5, 2, 0)
+spotLight.lookAt(0, 0, 0)
+//spotLight.camera.far = 5
+const spotLightHelper = new THREE.SpotLightHelper(spotLight)
 
+
+scene.add(spotLight)
+scene.add(spotLightHelper)
 
 let model
 const gltf_loader = new GLTFLoader();
 gltf_loader.load('/models/look_1_leg.glb', function(gltf) {
-
     model = gltf.scene;
     model.scale.set(2, 2, 2)
     model.position.set(0, -0.165, 0)
@@ -97,15 +101,16 @@ camera.lookAt(0, 0.5, 0)
 const renderer = new THREE.WebGLRenderer({
     canvas: canvas,
     antialias: true,
-    toneMapping: THREE.NoToneMapping
 })
+renderer.toneMapping = THREE.ACESFilmicToneMapping
+
 
 gui.add(renderer, 'toneMapping', {
+    ACESFilmic: THREE.ACESFilmicToneMapping,
     No: THREE.NoToneMapping,
     Linear: THREE.LinearToneMapping,
     Reinhard: THREE.ReinhardToneMapping,
-    Cineon: THREE.CineonToneMapping,
-    ACESFilmic: THREE.ACESFilmicToneMapping
+    Cineon: THREE.CineonToneMapping
 })
 
 renderer.setSize(sizes.width, sizes.height)
