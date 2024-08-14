@@ -42,28 +42,53 @@ gui.add(floorMaterial, 'wireframe')
  * Lights
  */
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 1)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
 scene.add(ambientLight)
 
-const spotLight = new THREE.SpotLight(0x22ff22, 5)
-spotLight.angle = Math.PI / 7
-spotLight.castShadow = true;
-spotLight.shadow.mapSize.width = 1024;
-spotLight.shadow.mapSize.height = 1024;
+const spotLightR = new THREE.SpotLight(0xffffff, 3)
 
-//spotLight.shadow.camera.near = 500;
-//spotLight.shadow.camera.far = 4000;
-//spotLight.shadow.camera.fov = 30;
+spotLightR.angle = Math.PI / 7
+spotLightR.castShadow = true;
+spotLightR.shadow.mapSize.width = 1024;
+spotLightR.shadow.mapSize.height = 1024;
 
-spotLight.penumbra = 0.1
-spotLight.position.set(0.5, 2, 0)
-spotLight.lookAt(0, 0, 0)
-//spotLight.camera.far = 5
-const spotLightHelper = new THREE.SpotLightHelper(spotLight)
+spotLightR.shadow.camera.near = 1;
+spotLightR.shadow.camera.far = 3;
+spotLightR.shadow.camera.fov = 30;
+const spotLightRCameraHelper = new THREE.CameraHelper(spotLightR.shadow.camera)
+scene.add(spotLightRCameraHelper)
+
+spotLightR.penumbra = 0.1
+spotLightR.position.set(-0.5, 2, 0)
+spotLightR.lookAt(0, 0, 0)
+//const spotLightRHelper = new THREE.SpotLightHelper(spotLightR)
+
+scene.add(spotLightR)
+//scene.add(spotLightRHelper)
 
 
-scene.add(spotLight)
-scene.add(spotLightHelper)
+const spotLightL = new THREE.SpotLight(0xffffff, 3)
+
+spotLightL.angle = Math.PI / 7
+spotLightL.castShadow = true;
+spotLightL.shadow.mapSize.width = 512;
+spotLightL.shadow.mapSize.height = 512;
+
+spotLightL.shadow.camera.near = 1;
+spotLightL.shadow.camera.far = 3;
+spotLightL.shadow.camera.fov = 30;
+const spotLightLCameraHelper = new THREE.CameraHelper(spotLightL.shadow.camera)
+scene.add(spotLightLCameraHelper)
+
+
+spotLightL.penumbra = 0.1
+spotLightL.position.set(0.5, 2, 0)
+spotLightL.lookAt(0, 0, 0)
+//const spotLightLHelper = new THREE.SpotLightHelper(spotLightL)
+
+scene.add(spotLightL)
+//scene.add(spotLightLHelper)
+
 
 let model
 const gltf_loader = new GLTFLoader();
