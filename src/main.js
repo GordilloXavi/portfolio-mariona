@@ -1,7 +1,6 @@
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { FirstPersonControls } from 'three/examples/jsm/Addons.js';
 import { Timer } from 'three/addons/misc/Timer.js'
-import { Sky } from 'three/addons/objects/Sky.js'
 import GUI from 'lil-gui'
 import Stats from 'stats.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
@@ -29,7 +28,7 @@ document.body.appendChild(stats.dom);
  * Lights
  */
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xaaaaaa, 10)
+const ambientLight = new THREE.AmbientLight(0xaaaaaa, 1)
 scene.add(ambientLight)
 
 /*
@@ -53,6 +52,15 @@ gltf_loader.load('/models/look_1.glb', function(gltf) {
 
     const boxHelper = new THREE.BoxHelper(model, 0xffff00); // Yellow bounding box
     scene.add(boxHelper);
+
+    scene.add(model)
+})
+
+gltf_loader.load('/models/krimson_city_sewers/scene.gltf', function(gltf) {
+    model = gltf.scene;
+
+    //const boxHelper = new THREE.BoxHelper(model, 0xffff00); // Yellow bounding box
+    //scene.add(boxHelper);
 
     scene.add(model)
 })
@@ -89,16 +97,13 @@ window.addEventListener('resize', () =>
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
+const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 500)
 camera.position.x = 0
 camera.position.y = 1
 camera.position.z = -3
 camera.lookAt(0, 0, 0);
 scene.add(camera)
 
-// Controls
-const controls = new OrbitControls(camera, canvas)
-controls.enableDamping = true
 
 /**
  * Renderer
@@ -109,18 +114,11 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
-/**
- * Sky
- */
-const sky = new Sky()
-sky.scale.set(100, 100, 100)
-//scene.add(sky)
 
-sky.material.uniforms['turbidity'].value = 10
-sky.material.uniforms['rayleigh'].value = 3
-sky.material.uniforms['mieCoefficient'].value = 0.1
-sky.material.uniforms['mieDirectionalG'].value = 0.95
-sky.material.uniforms['sunPosition'].value.set(0.3, -0.038, -0.95)
+// Controls
+const controls = new FirstPersonControls( camera, renderer.domElement );
+controls.movementSpeed = 1;
+controls.lookSpeed = 0.05;
 
 /**
  * Fog
@@ -141,7 +139,7 @@ const tick = () =>
     const elapsedTime = timer.getElapsed()
 
     // Update controls
-    controls.update()
+    controls.update( elapsedTime/100 );
 
     // Render
     renderer.render(scene, camera)
