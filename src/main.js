@@ -42,7 +42,7 @@ audioLoader.load( 'sounds/music.mp3', function( buffer ) {
 //gui.add(sound, 'volume', 0.01, 1)
 
 // Environment
-const floorMaterial = new THREE.MeshStandardMaterial(0x555555)
+const floorMaterial = new THREE.MeshStandardMaterial(0x000000)
 const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(100, 100, 100, 100),
     floorMaterial
@@ -174,17 +174,45 @@ gltf_loader.load('/models/look_1_leg.glb', function(gltf) {
     model.traverse((child) => {
         if (child.isMesh) {
             child.castShadow = true
-            child.receiveShadow = true
+            //child.receiveShadow = true
             const geometry = child.geometry
             geometry.computeVertexNormals() // Calculate normals
         }
     });
 
     model.scale.set(2, 2, 2)
-    model.position.set(0, 0.25 -0.165, 0)
+    model.position.set(0, 0.25 -0.14, -0.05)
     model.rotateY(Math.PI)
 
     scene.add(model)
+})
+
+gltf_loader.load('/models/studio_light.glb', function(gltf) {
+    const positions = [
+        new THREE.Vector3(-1.2, 0, 0),
+        new THREE.Vector3(0, 0, 1.2),
+        new THREE.Vector3(1.2, 0, 0),
+        new THREE.Vector3(0, 0, -1.2),
+    ]
+    model = gltf.scene
+    model.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true
+        }
+    });
+
+    model.scale.set(0.5, 0.5, 0.5)
+    //model.position.set(-1.2, 0, 0)
+    model.rotateY(Math.PI/2)
+
+    for (let i = 0; i < positions.length; i++) {
+        const modelClone = model.clone()
+        modelClone.position.copy(positions[i])
+        modelClone.rotateY(Math.PI / 2 * i)
+        scene.add(modelClone)
+    }
+
+    //scene.add(model)
 })
 
 /**
@@ -197,7 +225,7 @@ const sizes = {
 
 // Add GridHelper to the scene
 const gridHelper = new THREE.GridHelper(50, 50)
-//scene.add(gridHelper)
+scene.add(gridHelper)
 
 window.addEventListener('resize', () =>
 {
@@ -218,10 +246,10 @@ window.addEventListener('resize', () =>
  * Camera
  */
 const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 500)
-camera.position.x = 0
+camera.position.x = -2
 camera.position.y = 0.8
-camera.position.z = -2.5
-camera.lookAt(0, 0.5, 0)
+camera.position.z = -2
+camera.lookAt(0, 0.8, 0)
 camera.add( audioListener );
 
 
