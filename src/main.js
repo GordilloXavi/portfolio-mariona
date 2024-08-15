@@ -33,7 +33,7 @@ let muted = false
 
 // load a sound and set it as the PositionalAudio object's buffer
 const audioLoader = new THREE.AudioLoader();
-audioLoader.load( 'sounds/music.mp3', function( buffer ) {
+audioLoader.load( 'sounds/kaart4.mp3', function( buffer ) {
 	sound.setBuffer( buffer )
 	sound.setRefDistance( 1 )
 	//sound.play()
@@ -314,7 +314,6 @@ controls.addEventListener( 'lock', function () {
     gui.hide()
 
     if (!muted) {
-        console.log('playing sound')
         sound.play()
     }
 } )
@@ -378,7 +377,7 @@ const onKeyUp = function ( event ) {
 const onKeyPress = function (event) {
     if (event.code === 'KeyF') {
         if (!document.fullscreenElement) {
-            canvas.requestFulflscreen()
+            canvas.requestFullscreen()
         } else {
             document.exitFullscreen()
         }
@@ -398,14 +397,15 @@ document.addEventListener( 'keydown', onKeyDown )
 document.addEventListener( 'keyup', onKeyUp )
 document.addEventListener( 'keypress', onKeyPress)
 
+/*
 window.addEventListener('dblclick', () => {
     if (!document.fullscreenElement) {
-        canvas.requestFullscreen();
+        canvas.requestFullscreen()
     } else {
-        document.exitFullscreen();
+        document.exitFullscreen()
     }
 });
-
+*/
 
 const timer = new Timer()
 
