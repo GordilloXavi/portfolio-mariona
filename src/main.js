@@ -57,7 +57,7 @@ scene.add(floor)
 gui.add(floorMaterial, 'wireframe')
 
 const pedestalMaterial = new THREE.MeshPhysicalMaterial()
-pedestalMaterial.color = new THREE.Color() //(0xeeffef)
+pedestalMaterial.color = new THREE.Color(0xeefff0)
 pedestalMaterial.metalness = 0
 pedestalMaterial.roughness = 0.15
 pedestalMaterial.transmission = 1
@@ -378,6 +378,7 @@ const onKeyPress = function (event) {
     if (event.code === 'KeyF') {
         if (!document.fullscreenElement) {
             canvas.requestFullscreen()
+            controls.lock()
         } else {
             document.exitFullscreen()
         }
