@@ -4,6 +4,15 @@ import { Timer } from 'three/addons/misc/Timer.js'
 import GUI from 'lil-gui'
 import Stats from 'stats.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+//import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass';
+import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
+import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+
+
 
 /**
  * Base
@@ -37,10 +46,8 @@ audioLoader.load( 'sounds/kaart4.mp3', function( buffer ) {
 	sound.setBuffer( buffer )
 	sound.setRefDistance( 3 )
     sound.setRolloffFactor(5)
-	//sound.play()
     sound.setLoop(true)
     sound.setVolume(1)
-    //sound.setRolloffFactor(100)
 });
 
 // Environment
@@ -52,6 +59,8 @@ const floor = new THREE.Mesh(
 floor.rotateX(-Math.PI/2)
 floor.receiveShadow = true
 scene.add(floor)
+
+const floorGUIFolder = 
 gui.add(floorMaterial, 'wireframe')
 
 const pedestalMaterial = new THREE.MeshPhysicalMaterial()
@@ -77,6 +86,7 @@ scene.add(pedestal)
  * Lights
  */
 const lightsGUIFolder = gui.addFolder( 'Lights' );
+lightsGUIFolder.close()
 
 // Ambient light
 const ambientLight = new THREE.AmbientLight(0xffffff, 0)
@@ -198,11 +208,11 @@ gltf_loader.load('/models/studio_light.glb', function(gltf) {
     model.traverse((child) => {
         if (child.isMesh) {
             child.castShadow = true
+            child.material.emissive.set(0xdddddd);
         }
     });
 
     model.scale.set(0.5, 0.5, 0.5)
-    //model.position.set(-1.2, 0, 0)
     model.rotateY(Math.PI/2)
 
     for (let i = 0; i < positions.length; i++) {
@@ -211,8 +221,6 @@ gltf_loader.load('/models/studio_light.glb', function(gltf) {
         modelClone.rotateY(Math.PI / 2 * i)
         scene.add(modelClone)
     }
-
-    //scene.add(model)
 })
 
 /**
@@ -225,7 +233,7 @@ const sizes = {
 
 // Add GridHelper to the scene
 const gridHelper = new THREE.GridHelper(50, 50)
-scene.add(gridHelper)
+//scene.add(gridHelper)
 
 window.addEventListener('resize', () =>
 {
@@ -240,6 +248,9 @@ window.addEventListener('resize', () =>
     // Update renderer
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+    effectComposer.setSize(sizes.width, sizes.height)
+    effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
 
 /**
@@ -261,6 +272,7 @@ const renderer = new THREE.WebGLRenderer({
     antialias: true,
 })
 renderer.shadowMap.enabled = true
+renderer.colorSpace = THREE.SRGBColorSpace
 
 renderer.toneMapping = THREE.ACESFilmicToneMapping
 
@@ -278,6 +290,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 // Controls
 const controlsGUIFolder = gui.addFolder('controls')
+controlsGUIFolder.close()
 
 let moveForward = false
 let moveBackward = false
@@ -406,6 +419,44 @@ window.addEventListener('dblclick', () => {
 });
 */
 
+// Post-processing setup
+const effectComposer = new EffectComposer(renderer);
+effectComposer.setSize(sizes.width, sizes.height)
+effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+effectComposer.addPass(new RenderPass(scene, camera));
+
+const unrealBloomPass = new UnrealBloomPass()
+
+unrealBloomPass.strength = 0.3
+unrealBloomPass.radius = 0.1
+unrealBloomPass.threshold = 0.8
+
+const bloomGUIFolder = gui.addFolder('bloom')
+bloomGUIFolder.close()
+
+let postprocessingParams = {
+    enabled: true
+}
+
+bloomGUIFolder.add(postprocessingParams, 'enabled')
+bloomGUIFolder.add(unrealBloomPass, 'strength', 0, 2)
+bloomGUIFolder.add(unrealBloomPass, 'radius', 0, 2)
+bloomGUIFolder.add(unrealBloomPass, 'threshold', 0, 2)
+
+effectComposer.addPass(unrealBloomPass)
+
+const gammaCorrectionPass = new ShaderPass(GammaCorrectionShader)
+effectComposer.addPass(gammaCorrectionPass)
+
+// Antialias
+if(renderer.getPixelRatio() === 1 && !renderer.capabilities.isWebGL2)
+    {
+        const smaaPass = new SMAAPass()
+        effectComposer.addPass(smaaPass)
+    
+        console.log('Using SMAA')
+    }
+
 const timer = new Timer()
 
 const tick = () =>
@@ -431,7 +482,11 @@ const tick = () =>
 
 
     // Render
-    renderer.render(scene, camera)
+    if (postprocessingParams.enabled) {
+        effectComposer.render()
+    } else {
+        renderer.render(scene,camera)
+    }
 
     stats.end()
     // Call tick again on the next frame
