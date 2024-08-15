@@ -35,13 +35,13 @@ let muted = false
 const audioLoader = new THREE.AudioLoader();
 audioLoader.load( 'sounds/kaart4.mp3', function( buffer ) {
 	sound.setBuffer( buffer )
-	sound.setRefDistance( 1 )
+	sound.setRefDistance( 3 )
+    sound.setRolloffFactor(5)
 	//sound.play()
     sound.setLoop(true)
-    sound.setVolume(0.05)
+    sound.setVolume(1)
     //sound.setRolloffFactor(100)
 });
-//gui.add(sound, 'volume', 0.01, 1)
 
 // Environment
 const floorMaterial = new THREE.MeshStandardMaterial(0x000000)
@@ -49,8 +49,6 @@ const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(100, 100, 100, 100),
     floorMaterial
 )
-floor.metalness = 1
-floor.roughness = 0
 floor.rotateX(-Math.PI/2)
 floor.receiveShadow = true
 scene.add(floor)
@@ -59,10 +57,10 @@ gui.add(floorMaterial, 'wireframe')
 const pedestalMaterial = new THREE.MeshPhysicalMaterial()
 pedestalMaterial.color = new THREE.Color(0xeefff0)
 pedestalMaterial.metalness = 0
-pedestalMaterial.roughness = 0.15
+pedestalMaterial.roughness = 0.05
 pedestalMaterial.transmission = 1
 pedestalMaterial.ior = 1.7
-pedestalMaterial.thickness = 0.9
+pedestalMaterial.thickness = 0.5
 
 const pedestal = new THREE.Mesh(
     new THREE.BoxGeometry(0.5, 0.5, 0.5),
@@ -227,7 +225,7 @@ const sizes = {
 
 // Add GridHelper to the scene
 const gridHelper = new THREE.GridHelper(50, 50)
-//scene.add(gridHelper)
+scene.add(gridHelper)
 
 window.addEventListener('resize', () =>
 {
@@ -292,7 +290,7 @@ const controlParams = {
     velocityDecay: 0.1
 }
 
-controlsGUIFolder.add(controlParams, 'movementSpeed', 1, 50)
+controlsGUIFolder.add(controlParams, 'movementSpeed', 1, 100)
 controlsGUIFolder.add(controlParams, 'velocityDecay', 0.01, 5)
 
 
