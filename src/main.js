@@ -10,6 +10,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
  */
 // Debug
 const gui = new GUI()
+gui.close()
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -226,7 +227,7 @@ const sizes = {
 
 // Add GridHelper to the scene
 const gridHelper = new THREE.GridHelper(50, 50)
-scene.add(gridHelper)
+//scene.add(gridHelper)
 
 window.addEventListener('resize', () =>
 {
