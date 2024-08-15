@@ -28,13 +28,14 @@ document.body.appendChild(stats.dom)
 const audioListener = new THREE.AudioListener();
 
 const sound = new THREE.PositionalAudio( audioListener );
+let muted = false
 
 // load a sound and set it as the PositionalAudio object's buffer
 const audioLoader = new THREE.AudioLoader();
 audioLoader.load( 'sounds/music.mp3', function( buffer ) {
 	sound.setBuffer( buffer )
 	sound.setRefDistance( 1 )
-	sound.play()
+	//sound.play()
     sound.setLoop(true)
     sound.setVolume(0.05)
     //sound.setRolloffFactor(100)
@@ -310,6 +311,11 @@ controls.addEventListener( 'lock', function () {
     instructions.style.display = 'none'
     blocker.style.display = 'none'
     gui.hide()
+
+    if (!muted) {
+        console.log('playing sound')
+        sound.play()
+    }
 } )
 
 controls.addEventListener( 'unlock', function () {
@@ -379,8 +385,10 @@ const onKeyPress = function (event) {
     else if (event.code === 'KeyM') {
         if (sound.isPlaying) {
             sound.pause()
+            muted = true
         } else {
             sound.play()
+            muted = false
         }
     }
 }
