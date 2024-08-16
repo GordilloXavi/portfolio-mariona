@@ -70,6 +70,7 @@ materialColorTexture.wrapT = THREE.MirroredRepeatWrapping
 materialColorTexture.generateMipmaps = false
 materialColorTexture.minFilter = THREE.NearestFilter
 materialColorTexture.magFilter = THREE.NearestFilter
+materialColorTexture.repeat.set(100, 100)
 
 const materialAOTexture = textureLoader.load('textures/kint/ao.png')
 materialAOTexture.wrapS = THREE.MirroredRepeatWrapping
@@ -96,40 +97,29 @@ materialMetalnessTexture.wrapS = THREE.MirroredRepeatWrapping
 materialMetalnessTexture.wrapT = THREE.MirroredRepeatWrapping
 materialMetalnessTexture.generateMipmaps = false
 
-
-const floorMaterial = new THREE.MeshStandardMaterial(0x000000)
-const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(100, 100, 100, 100),
-    floorMaterial
-)
-floor.rotateX(-Math.PI/2)
-floor.receiveShadow = true
-scene.add(floor)
-
-gui.add(floorMaterial, 'wireframe')
-
-//TEXTURED PEDESTAL 
-const pedestalMaterial = new THREE.MeshStandardMaterial({
-    color: 0x446611,
+//* TEXTURED PEDESTAL 
+const marbleMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffffff,//0x446611,
     map: materialColorTexture,
     aoMap: materialAOTexture,
-    roughnessMap: materialRoughnessTexture,
+    //roughnessMap: materialRoughnessTexture,
+    roughness: 0.325,
     metalnessMap: materialMetalnessTexture,
     normalMap: materialNormalTexture,
-    displacementMap: materialHeightTexture,
-    displacementBias: -0.001,
-    displacementScale: 0.001
+    //displacementMap: materialHeightTexture,
+    //displacementBias: 0,
+    //displacementScale: 0
 })
 
-/* CRYSTAL PEDESTAL
+//CRYSTAL PEDESTAL
 const pedestalMaterial = new THREE.MeshPhysicalMaterial()
-pedestalMaterial.color = new THREE.Color(0x333377)
-pedestalMaterial.metalness = 0.8
-pedestalMaterial.roughness = 0.2
-pedestalMaterial.transmission = 0
-pedestalMaterial.ior = 1.7
+pedestalMaterial.color = new THREE.Color(0xffffff)
+pedestalMaterial.metalness = 0
+pedestalMaterial.roughness = 0.05
+pedestalMaterial.transmission = 0.98
+pedestalMaterial.ior = 1.6
 pedestalMaterial.thickness = 0.5
-*/
+
 
 const pedestal = new THREE.Mesh(
     new THREE.BoxGeometry(0.5, 0.5, 0.5, 100, 100),
@@ -139,8 +129,20 @@ const pedestal = new THREE.Mesh(
 pedestal.castShadow = true
 pedestal.receiveShadow = true
 
-pedestal.add( sound );
+pedestal.add( sound )
 scene.add(pedestal)
+
+
+//const floorMaterial = new THREE.MeshStandardMaterial(0x000000)
+const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(100, 100, 100, 100),
+    marbleMaterial
+)
+floor.rotateX(-Math.PI/2)
+floor.receiveShadow = true
+scene.add(floor)
+
+gui.add(marbleMaterial, 'wireframe')
 
 /**
  * Lights
