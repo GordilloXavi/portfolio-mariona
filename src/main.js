@@ -29,8 +29,15 @@ const scene = new THREE.Scene()
 
 // Initialize stats to show FPS
 const stats = new Stats()
-stats.showPanel(0) // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom)
+//stats.dom.style.display = 'none' // hide by default
+
+const options = {
+    showStats: true,
+};
+gui.add(options, 'showStats').name('show FPS').onChange((value) => {
+    stats.dom.style.display = value ? 'block' : 'none';
+});
 
 // ###### Scene
 
@@ -51,6 +58,45 @@ audioLoader.load( 'sounds/kaart4.mp3', function( buffer ) {
 });
 
 // Environment
+
+// Textures
+
+
+const textureLoader = new THREE.TextureLoader()
+const materialColorTexture = textureLoader.load('textures/kint/color.png')
+materialColorTexture.colorSpace = THREE.SRGBColorSpace
+materialColorTexture.wrapS = THREE.MirroredRepeatWrapping
+materialColorTexture.wrapT = THREE.MirroredRepeatWrapping
+materialColorTexture.generateMipmaps = false
+materialColorTexture.minFilter = THREE.NearestFilter
+materialColorTexture.magFilter = THREE.NearestFilter
+
+const materialAOTexture = textureLoader.load('textures/kint/ao.png')
+materialAOTexture.wrapS = THREE.MirroredRepeatWrapping
+materialAOTexture.wrapT = THREE.MirroredRepeatWrapping
+materialAOTexture.generateMipmaps = false
+
+const materialHeightTexture = textureLoader.load('textures/kint/height.png')
+materialHeightTexture.wrapS = THREE.MirroredRepeatWrapping
+materialHeightTexture.wrapT = THREE.MirroredRepeatWrapping
+materialHeightTexture.generateMipmaps = false
+
+const materialNormalTexture = textureLoader.load('textures/kint/normal.png')
+materialNormalTexture.wrapS = THREE.MirroredRepeatWrapping
+materialNormalTexture.wrapT = THREE.MirroredRepeatWrapping
+materialNormalTexture.generateMipmaps = false
+
+const materialRoughnessTexture = textureLoader.load('textures/kint/roughness.png')
+materialRoughnessTexture.wrapS = THREE.MirroredRepeatWrapping
+materialRoughnessTexture.wrapT = THREE.MirroredRepeatWrapping
+materialRoughnessTexture.generateMipmaps = false
+
+const materialMetalnessTexture = textureLoader.load('textures/kint/metalness.png')
+materialMetalnessTexture.wrapS = THREE.MirroredRepeatWrapping
+materialMetalnessTexture.wrapT = THREE.MirroredRepeatWrapping
+materialMetalnessTexture.generateMipmaps = false
+
+
 const floorMaterial = new THREE.MeshStandardMaterial(0x000000)
 const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(100, 100, 100, 100),
@@ -60,24 +106,38 @@ floor.rotateX(-Math.PI/2)
 floor.receiveShadow = true
 scene.add(floor)
 
-const floorGUIFolder = 
 gui.add(floorMaterial, 'wireframe')
 
+//TEXTURED PEDESTAL 
+const pedestalMaterial = new THREE.MeshStandardMaterial({
+    color: 0x446611,
+    map: materialColorTexture,
+    aoMap: materialAOTexture,
+    roughnessMap: materialRoughnessTexture,
+    metalnessMap: materialMetalnessTexture,
+    normalMap: materialNormalTexture,
+    displacementMap: materialHeightTexture,
+    displacementBias: -0.001,
+    displacementScale: 0.001
+})
+
+/* CRYSTAL PEDESTAL
 const pedestalMaterial = new THREE.MeshPhysicalMaterial()
-pedestalMaterial.color = new THREE.Color(0xeefff0)
-pedestalMaterial.metalness = 0
-pedestalMaterial.roughness = 0.05
-pedestalMaterial.transmission = 1
+pedestalMaterial.color = new THREE.Color(0x333377)
+pedestalMaterial.metalness = 0.8
+pedestalMaterial.roughness = 0.2
+pedestalMaterial.transmission = 0
 pedestalMaterial.ior = 1.7
 pedestalMaterial.thickness = 0.5
+*/
 
 const pedestal = new THREE.Mesh(
-    new THREE.BoxGeometry(0.5, 0.5, 0.5),
+    new THREE.BoxGeometry(0.5, 0.5, 0.5, 100, 100),
     pedestalMaterial
 )
+
 pedestal.castShadow = true
 pedestal.receiveShadow = true
-pedestal.position.y = 0
 
 pedestal.add( sound );
 scene.add(pedestal)
@@ -99,7 +159,7 @@ spotLightTargetObject.position.set(0, 1, 0)
 scene.add(spotLightTargetObject)
 const spotLightR = new THREE.SpotLight(0xffffff, 3)
 
-spotLightR.angle = Math.PI / 5
+spotLightR.angle = Math.PI / 4
 spotLightR.castShadow = true;
 spotLightR.shadow.mapSize.width = 1024
 spotLightR.shadow.mapSize.height = 1024
@@ -118,7 +178,7 @@ scene.add(spotLightR)
 
 const spotLightL = new THREE.SpotLight(0xffffff, 3)
 
-spotLightL.angle = Math.PI / 5
+spotLightL.angle = Math.PI / 4
 spotLightL.castShadow = true
 spotLightL.shadow.mapSize.width = 1024
 spotLightL.shadow.mapSize.height = 1024
@@ -138,7 +198,7 @@ scene.add(spotLightL)
 
 const spotLightF = new THREE.SpotLight(0xffffff, 3)
 
-spotLightF.angle = Math.PI / 5
+spotLightF.angle = Math.PI / 4
 spotLightF.castShadow = true
 spotLightF.shadow.mapSize.width = 1024
 spotLightF.shadow.mapSize.height = 1024
@@ -158,7 +218,7 @@ scene.add(spotLightF)
 
 const spotLightB = new THREE.SpotLight(0xffffff, 3)
 
-spotLightB.angle = Math.PI / 5
+spotLightB.angle = Math.PI / 4
 spotLightB.castShadow = true
 spotLightB.shadow.mapSize.width = 1024
 spotLightB.shadow.mapSize.height = 1024
