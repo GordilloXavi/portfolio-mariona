@@ -8,6 +8,7 @@ html,
 body
 {
     overflow: hidden;
+    font-family: 'Libre Barcode 39 Text', serif;
 }
 
 .webgl
@@ -23,7 +24,7 @@ body
     position: absolute;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.6);
+    background-color: rgba(0,0,0,0.3);
     backdrop-filter: blur(3px)
 }
 
@@ -37,7 +38,16 @@ body
     align-items: center;
 
     text-align: left;
-    font-size: 14px;
+    font-size: 32px;
     color: white;
     cursor: pointer;
+}
+
+@font-face {
+    font-family: 'Libre Barcode 39 Text';
+    src: url('../static/fonts/barcode/LibreBarcode39Text-Regular.woff2') format('woff2'),
+        url('../static/fonts/barcode/LibreBarcode39Text-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
 }

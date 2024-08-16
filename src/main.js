@@ -362,11 +362,15 @@ const velocity = new THREE.Vector3()
 const direction = new THREE.Vector3()
 const controlParams = {
     movementSpeed: 20,
-    velocityDecay: 0.1
+    velocityDecay: 0.1,
+    stepFrequency: 1,
+    stepAmplitude: 1
 }
 
-controlsGUIFolder.add(controlParams, 'movementSpeed', 1, 100)
+controlsGUIFolder.add(controlParams, 'movementSpeed', 1, 150)
 controlsGUIFolder.add(controlParams, 'velocityDecay', 0.01, 5)
+controlsGUIFolder.add(controlParams, 'stepFrequency', 0, 10)
+controlsGUIFolder.add(controlParams, 'stepAmplitude', 0, 10)
 
 
 const controls = new PointerLockControls( camera, document.body )
