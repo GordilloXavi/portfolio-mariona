@@ -146,19 +146,21 @@ gui.add(marbleMaterial, 'wireframe')
 /**
  * Lights
  */
-const lightsGUIFolder = gui.addFolder( 'Lights' );
+const lightsGUIFolder = gui.addFolder( 'lights' );
 lightsGUIFolder.close()
 
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.4)
 scene.add(ambientLight)
 
-lightsGUIFolder.add(ambientLight, 'intensity', 0, 3)
+lightsGUIFolder.add(ambientLight, 'intensity', 0, 3).name('ambient light')
 
 const spotLightTargetObject = new THREE.Object3D();
 spotLightTargetObject.position.set(0, 1, 0)
 scene.add(spotLightTargetObject)
-const spotLightR = new THREE.SpotLight(0xffffff, 3)
+
+const spotLightR = new THREE.SpotLight(0xffffff, 2)
+lightsGUIFolder.add(spotLightR, 'intensity', 0, 5).name('light 1')
 
 spotLightR.angle = Math.PI / 4
 spotLightR.castShadow = true;
@@ -177,7 +179,8 @@ spotLightR.target = spotLightTargetObject
 
 scene.add(spotLightR)
 
-const spotLightL = new THREE.SpotLight(0xffffff, 3)
+const spotLightL = new THREE.SpotLight(0xffffff, 2)
+lightsGUIFolder.add(spotLightL, 'intensity', 0, 5).name('light 2')
 
 spotLightL.angle = Math.PI / 4
 spotLightL.castShadow = true
@@ -197,7 +200,8 @@ spotLightL.target = spotLightTargetObject
 
 scene.add(spotLightL)
 
-const spotLightF = new THREE.SpotLight(0xffffff, 3)
+const spotLightF = new THREE.SpotLight(0xffffff, 2)
+lightsGUIFolder.add(spotLightF, 'intensity', 0, 5).name('light 3')
 
 spotLightF.angle = Math.PI / 4
 spotLightF.castShadow = true
@@ -217,7 +221,8 @@ spotLightF.target = spotLightTargetObject
 
 scene.add(spotLightF)
 
-const spotLightB = new THREE.SpotLight(0xffffff, 3)
+const spotLightB = new THREE.SpotLight(0xffffff, 2)
+lightsGUIFolder.add(spotLightB, 'intensity', 0, 5).name('light 4')
 
 spotLightB.angle = Math.PI / 4
 spotLightB.castShadow = true
@@ -239,7 +244,7 @@ scene.add(spotLightB)
 
 let model
 const gltf_loader = new GLTFLoader();
-gltf_loader.load('/models/look_1_leg.glb', function(gltf) {
+gltf_loader.load('/models/look_1_leg_hd.glb', function(gltf) {
     model = gltf.scene
 
     model.traverse((child) => {
@@ -251,7 +256,7 @@ gltf_loader.load('/models/look_1_leg.glb', function(gltf) {
         }
     });
 
-    model.scale.set(2, 2, 2)
+    model.scale.set(1, 1, 1)
     model.position.set(0, 0.25 -0.14, -0.05)
     model.rotateY(Math.PI)
 
@@ -269,7 +274,7 @@ gltf_loader.load('/models/studio_light.glb', function(gltf) {
     model.traverse((child) => {
         if (child.isMesh) {
             child.castShadow = true
-            child.material.emissive.set(0xdddddd);
+            child.material.emissive.set(0xffffff);
         }
     });
 
