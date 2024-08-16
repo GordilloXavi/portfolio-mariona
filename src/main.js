@@ -6,17 +6,12 @@ import Stats from 'stats.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-//import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass';
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
 
 
-
-/**
- * Base
- */
 // Debug
 const gui = new GUI()
 gui.close()
@@ -26,6 +21,9 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+
+// Fog
+scene.fog = new THREE.FogExp2(0x000000, 0.03)
 
 // Initialize stats to show FPS
 const stats = new Stats()
@@ -104,7 +102,8 @@ const marbleMaterial = new THREE.MeshStandardMaterial({
     aoMap: materialAOTexture,
     //roughnessMap: materialRoughnessTexture,
     roughness: 0.325,
-    metalnessMap: materialMetalnessTexture,
+    metalness: 1,
+    //metalnessMap: materialMetalnessTexture,
     normalMap: materialNormalTexture,
     //displacementMap: materialHeightTexture,
     //displacementBias: 0,
