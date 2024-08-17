@@ -299,7 +299,8 @@ gltf_loader.load('/models/pedestal.glb', function(gltf) {
     model.traverse((child) => {
         if (child.isMesh) {
             child.castShadow = true
-            child.material.color = new THREE.Color(0xaaaaaa)
+            child.receiveShadow = true
+            child.material.color = new THREE.Color(0xcccccc)
         }
     });
 
