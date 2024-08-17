@@ -129,7 +129,7 @@ pedestal.castShadow = true
 pedestal.receiveShadow = true
 
 pedestal.add( sound )
-scene.add(pedestal)
+// scene.add(pedestal)
 
 
 //const floorMaterial = new THREE.MeshStandardMaterial(0x000000)
@@ -150,7 +150,7 @@ const lightsGUIFolder = gui.addFolder( 'lights' );
 lightsGUIFolder.close()
 
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.4)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.25)
 scene.add(ambientLight)
 
 lightsGUIFolder.add(ambientLight, 'intensity', 0, 3).name('ambient light')
@@ -257,7 +257,7 @@ gltf_loader.load('/models/look_1_leg.glb', function(gltf) { //  TODO: replace wi
     });
 
     //model.scale.set(0.5, 0.5, 0.5)
-    model.position.set(0, 0.25, 0)
+    model.position.set(0.05, 0.4, 0.05)
     model.rotateY(Math.PI)
 
     scene.add(model)
@@ -287,6 +287,21 @@ gltf_loader.load('/models/studio_light.glb', function(gltf) {
         modelClone.rotateY(Math.PI / 2 * i)
         scene.add(modelClone)
     }
+})
+
+
+gltf_loader.load('/models/pedestal.glb', function(gltf) {
+    model = gltf.scene
+    model.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true
+            child.material.color = new THREE.Color(0xaaaaaa)
+        }
+    });
+
+    model.scale.set(0.25, 0.145, 0.25)
+    //model.rotateY(Math.PI/2)
+    scene.add(model)
 })
 
 /**
@@ -324,7 +339,7 @@ window.addEventListener('resize', () =>
  */
 const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 500)
 camera.position.x = -2
-camera.position.y = 0.8
+camera.position.y = 0.85
 camera.position.z = -2
 camera.lookAt(0, 0.8, 0)
 camera.add( audioListener );
