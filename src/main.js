@@ -173,6 +173,8 @@ spotLightR.angle = Math.PI / 4
 spotLightR.castShadow = true;
 spotLightR.shadow.mapSize.width = 1024
 spotLightR.shadow.mapSize.height = 1024
+const shadowBias = -0.01;
+spotLightR.shadow.bias = shadowBias
 
 spotLightR.shadow.camera.near = 1
 spotLightR.shadow.camera.far = 7
@@ -193,6 +195,7 @@ spotLightL.angle = Math.PI / 4
 spotLightL.castShadow = true
 spotLightL.shadow.mapSize.width = 1024
 spotLightL.shadow.mapSize.height = 1024
+spotLightL.shadow.bias = shadowBias
 
 spotLightL.shadow.camera.near = 1
 spotLightL.shadow.camera.far = 7
@@ -214,6 +217,7 @@ spotLightF.angle = Math.PI / 4
 spotLightF.castShadow = true
 spotLightF.shadow.mapSize.width = 1024
 spotLightF.shadow.mapSize.height = 1024
+spotLightF.shadow.bias = shadowBias
 
 spotLightF.shadow.camera.near = 1
 spotLightF.shadow.camera.far = 7
@@ -235,6 +239,7 @@ spotLightB.angle = Math.PI / 4
 spotLightB.castShadow = true
 spotLightB.shadow.mapSize.width = 1024
 spotLightB.shadow.mapSize.height = 1024
+spotLightB.shadow.bias = shadowBias
 
 spotLightB.shadow.camera.near = 1
 spotLightB.shadow.camera.far = 7
@@ -301,6 +306,7 @@ gltf_loader.load('/models/pedestal.glb', function(gltf) {
     model = gltf.scene
     model.traverse((child) => {
         if (child.isMesh) {
+            // FIXME: this makes the texture look granulated!!
             child.castShadow = true
             child.receiveShadow = true
             child.material.color = new THREE.Color(0xeeeeee)
