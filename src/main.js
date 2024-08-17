@@ -79,21 +79,25 @@ const materialHeightTexture = textureLoader.load('textures/kint/height.png')
 materialHeightTexture.wrapS = THREE.MirroredRepeatWrapping
 materialHeightTexture.wrapT = THREE.MirroredRepeatWrapping
 materialHeightTexture.generateMipmaps = false
+materialHeightTexture.repeat.set(100, 100)
 
 const materialNormalTexture = textureLoader.load('textures/kint/normal.png')
 materialNormalTexture.wrapS = THREE.MirroredRepeatWrapping
 materialNormalTexture.wrapT = THREE.MirroredRepeatWrapping
 materialNormalTexture.generateMipmaps = false
+materialNormalTexture.repeat.set(100, 100)
 
 const materialRoughnessTexture = textureLoader.load('textures/kint/roughness.png')
 materialRoughnessTexture.wrapS = THREE.MirroredRepeatWrapping
 materialRoughnessTexture.wrapT = THREE.MirroredRepeatWrapping
 materialRoughnessTexture.generateMipmaps = false
+materialRoughnessTexture.repeat.set(100, 100)
 
 const materialMetalnessTexture = textureLoader.load('textures/kint/metalness.png')
 materialMetalnessTexture.wrapS = THREE.MirroredRepeatWrapping
 materialMetalnessTexture.wrapT = THREE.MirroredRepeatWrapping
 materialMetalnessTexture.generateMipmaps = false
+materialMetalnessTexture.repeat.set(100, 100)
 
 //* TEXTURED PEDESTAL 
 const marbleMaterial = new THREE.MeshStandardMaterial({
