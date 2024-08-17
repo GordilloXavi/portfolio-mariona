@@ -256,8 +256,8 @@ gltf_loader.load('/models/look_1_leg.glb', function(gltf) { //  TODO: replace wi
         }
     });
 
-    model.scale.set(2, 2, 2)
-    model.position.set(0, 0.25 -0.14, -0.05)
+    //model.scale.set(0.5, 0.5, 0.5)
+    model.position.set(0, 0.25, 0)
     model.rotateY(Math.PI)
 
     scene.add(model)
