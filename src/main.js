@@ -23,7 +23,9 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
 // Fog
-scene.fog = new THREE.FogExp2(0x000000, 0.03)
+const fog = new THREE.FogExp2(0x000000, 0.05)
+scene.fog = fog
+gui.add(fog, 'density', 0, 0.6).name('fog density')
 
 // Initialize stats to show FPS
 const stats = new Stats()
@@ -74,6 +76,7 @@ const materialAOTexture = textureLoader.load('textures/kint/ao.png')
 materialAOTexture.wrapS = THREE.MirroredRepeatWrapping
 materialAOTexture.wrapT = THREE.MirroredRepeatWrapping
 materialAOTexture.generateMipmaps = false
+materialAOTexture.repeat.set(100, 100)
 
 const materialHeightTexture = textureLoader.load('textures/kint/height.png')
 materialHeightTexture.wrapS = THREE.MirroredRepeatWrapping
@@ -104,7 +107,7 @@ const marbleMaterial = new THREE.MeshStandardMaterial({
     color: 0xffffff,//0x446611,
     map: materialColorTexture,
     aoMap: materialAOTexture,
-    //roughnessMap: materialRoughnessTexture,
+    //roughnessMap: materialRoughnessTexture, // activate for some cool visual effects
     roughness: 0.325,
     metalness: 1,
     //metalnessMap: materialMetalnessTexture,
@@ -154,7 +157,7 @@ const lightsGUIFolder = gui.addFolder( 'lights' );
 lightsGUIFolder.close()
 
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.25)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.012)
 scene.add(ambientLight)
 
 lightsGUIFolder.add(ambientLight, 'intensity', 0, 3).name('ambient light')
@@ -300,12 +303,11 @@ gltf_loader.load('/models/pedestal.glb', function(gltf) {
         if (child.isMesh) {
             child.castShadow = true
             child.receiveShadow = true
-            child.material.color = new THREE.Color(0xcccccc)
+            child.material.color = new THREE.Color(0xeeeeee)
         }
     });
 
     model.scale.set(0.25, 0.145, 0.25)
-    //model.rotateY(Math.PI/2)
     scene.add(model)
 })
 
