@@ -358,14 +358,12 @@ window.addEventListener('resize', () =>
 const cameraControlParams = {
     movementSpeed: 20,
     velocityDecay: 0.1,
-    stepFrequency: 1,
-    stepAmplitude: 1,
     initialX: -2,
     initialY: 0.85,
     initialZ: -2,
     movementCounter: 0,
-    footstepAmplitude: 60,
-    footstepFreq: 1.25
+    footstepAmplitude: 80,
+    footstepFreq: 1.2
 }
 
 const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 500)
@@ -412,7 +410,6 @@ const direction = new THREE.Vector3()
 
 controlsGUIFolder.add(cameraControlParams, 'movementSpeed', 1, 150).name('movement speed')
 controlsGUIFolder.add(cameraControlParams, 'velocityDecay', 0.01, 5)
-controlsGUIFolder.add(cameraControlParams, 'stepFrequency', 0, 10)
 controlsGUIFolder.add(cameraControlParams, 'footstepAmplitude', 0, 100).name('footsteps amplitude')
 controlsGUIFolder.add(cameraControlParams, 'footstepFreq', 0, 10).name('footsteps speed')
 //controlsGUIFolder.add(camera, 'fov', 0, 100).name('FOV')
@@ -589,7 +586,6 @@ const tick = () =>
     if (moveForward || moveBackward || moveLeft || moveRight) {
         cameraControlParams.movementCounter += frameElapsedTime
         const footstepHeight = Math.sin(-Math.PI/2 + cameraControlParams.movementCounter * (cameraControlParams.movementSpeed) / cameraControlParams.footstepFreq) / cameraControlParams.footstepAmplitude + 1/cameraControlParams.footstepAmplitude
-        console.log(footstepHeight)
         if (footstepHeight * cameraControlParams.footstepAmplitude > 1.9) {//&& !footstepSound.isPlaying()
             // footstepSound.play() // Play the footstep at the top of the sin function (that has amplitude [0, 2])
             //console.log('step!')
@@ -597,8 +593,7 @@ const tick = () =>
         camera.position.y = cameraControlParams.initialY + footstepHeight
     } else {
         const footstepHeight = Math.sin(-Math.PI/2 + cameraControlParams.movementCounter * (cameraControlParams.movementSpeed) / cameraControlParams.footstepFreq) / cameraControlParams.footstepAmplitude + 1/cameraControlParams.footstepAmplitude
-        if (footstepHeight > 0.005) {
-            console.log(footstepHeight)
+        if (footstepHeight > 0.0005) {
             camera.position.y = cameraControlParams.initialY + footstepHeight
             cameraControlParams.movementCounter += frameElapsedTime
         } else{
