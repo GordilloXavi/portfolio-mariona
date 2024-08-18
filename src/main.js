@@ -363,10 +363,9 @@ const cameraControlParams = {
     initialX: -2,
     initialY: 0.85,
     initialZ: -2,
-    isMoving: false,
     movementCounter: 0,
-    footstepAmplitude: 40,
-    footstepFreq: 1.5
+    footstepAmplitude: 60,
+    footstepFreq: 1.25
 }
 
 const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 500)
@@ -375,7 +374,6 @@ camera.position.y = cameraControlParams.initialY
 camera.position.z = cameraControlParams.initialZ
 camera.lookAt(0, 0.8, 0)
 camera.add( audioListener );
-
 
 /**
  * Renderer
@@ -415,9 +413,9 @@ const direction = new THREE.Vector3()
 controlsGUIFolder.add(cameraControlParams, 'movementSpeed', 1, 150).name('movement speed')
 controlsGUIFolder.add(cameraControlParams, 'velocityDecay', 0.01, 5)
 controlsGUIFolder.add(cameraControlParams, 'stepFrequency', 0, 10)
-controlsGUIFolder.add(cameraControlParams, 'footstepAmplitude', 0, 50).name('footsteps amplitude')
+controlsGUIFolder.add(cameraControlParams, 'footstepAmplitude', 0, 100).name('footsteps amplitude')
 controlsGUIFolder.add(cameraControlParams, 'footstepFreq', 0, 10).name('footsteps speed')
-
+//controlsGUIFolder.add(camera, 'fov', 0, 100).name('FOV')
 
 const controls = new PointerLockControls( camera, document.body )
 controls.pointerSpeed = 0.8
@@ -590,12 +588,23 @@ const tick = () =>
     // Footsteps
     if (moveForward || moveBackward || moveLeft || moveRight) {
         cameraControlParams.movementCounter += frameElapsedTime
-        camera.position.y = cameraControlParams.initialY + Math.sin(-Math.PI/2 + cameraControlParams.movementCounter * (cameraControlParams.movementSpeed) / cameraControlParams.footstepFreq) / cameraControlParams.footstepAmplitude + 1/cameraControlParams.footstepAmplitude
-        
-        cameraControlParams.isMoving = true
-    } else if (cameraControlParams.isMoving) {
-        cameraControlParams.movementCounter = 0
-        camera.position.y = cameraControlParams.initialY
+        const footstepHeight = Math.sin(-Math.PI/2 + cameraControlParams.movementCounter * (cameraControlParams.movementSpeed) / cameraControlParams.footstepFreq) / cameraControlParams.footstepAmplitude + 1/cameraControlParams.footstepAmplitude
+        console.log(footstepHeight)
+        if (footstepHeight * cameraControlParams.footstepAmplitude > 1.9) {//&& !footstepSound.isPlaying()
+            // footstepSound.play() // Play the footstep at the top of the sin function (that has amplitude [0, 2])
+            //console.log('step!')
+        }
+        camera.position.y = cameraControlParams.initialY + footstepHeight
+    } else {
+        const footstepHeight = Math.sin(-Math.PI/2 + cameraControlParams.movementCounter * (cameraControlParams.movementSpeed) / cameraControlParams.footstepFreq) / cameraControlParams.footstepAmplitude + 1/cameraControlParams.footstepAmplitude
+        if (footstepHeight > 0.005) {
+            console.log(footstepHeight)
+            camera.position.y = cameraControlParams.initialY + footstepHeight
+            cameraControlParams.movementCounter += frameElapsedTime
+        } else{
+            cameraControlParams.movementCounter = 0
+            camera.position.y = cameraControlParams.initialY
+        }
     }
 
     // Render
@@ -606,7 +615,6 @@ const tick = () =>
     }
 
     stats.end()
-    // Call tick again on the next frame
     window.requestAnimationFrame(tick)
 }
 
