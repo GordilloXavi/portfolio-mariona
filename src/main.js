@@ -31,38 +31,44 @@ gui.add(fog, 'density', 0, 0.6).name('fog density')
 
 const statsOptions = {
     showStats: false,
-};
+}
 const stats = new Stats()
 document.body.appendChild(stats.dom)
 if (!statsOptions.showStats) stats.dom.style.display = 'none'
 
 gui.add(statsOptions, 'showStats').name('show FPS').onChange((value) => {
-    stats.dom.style.display = value ? 'block' : 'none';
-});
+    stats.dom.style.display = value ? 'block' : 'none'
+})
 
 // ###### Scene
 
 // Audio 
-const audioListener = new THREE.AudioListener();
+const audioListener = new THREE.AudioListener()
 
-const sound = new THREE.PositionalAudio( audioListener );
+const positionalSound = new THREE.PositionalAudio( audioListener )
+const footstepSound = new THREE.Audio( audioListener )
 let muted = false
 
 // load a sound and set it as the PositionalAudio object's buffer
 const audioLoader = new THREE.AudioLoader();
+
 audioLoader.load( 'sounds/kaart4.mp3', function( buffer ) {
-	sound.setBuffer( buffer )
-	sound.setRefDistance( 3 )
-    sound.setRolloffFactor(5)
-    sound.setLoop(true)
-    sound.setVolume(1)
-});
+	positionalSound.setBuffer( buffer )
+	positionalSound.setRefDistance( 3 )
+    positionalSound.setRolloffFactor(5)
+    positionalSound.setLoop(true)
+    positionalSound.setVolume(1)
+})
+
+audioLoader.load( 'sounds/footstep.mp3', function( buffer ) { 
+	footstepSound.setBuffer( buffer )
+    footstepSound.setLoop(false)
+    footstepSound.setVolume(1)
+})
 
 // Environment
 
 // Textures
-
-
 const textureLoader = new THREE.TextureLoader()
 const materialColorTexture = textureLoader.load('textures/kint/color.png')
 materialColorTexture.colorSpace = THREE.SRGBColorSpace
@@ -432,7 +438,7 @@ controls.addEventListener( 'lock', function () {
     gui.hide()
 
     if (!muted) {
-        sound.play()
+        positionalSound.play()
     }
 } )
 
@@ -502,11 +508,11 @@ const onKeyPress = function (event) {
         }
     }
     else if (event.code === 'KeyM') {
-        if (sound.isPlaying) {
-            sound.pause()
+        if (positionalSound.isPlaying) {
+            positionalSound.pause()
             muted = true
         } else {
-            sound.play()
+            positionalSound.play()
             muted = false
         }
     }
@@ -586,9 +592,8 @@ const tick = () =>
     if (moveForward || moveBackward || moveLeft || moveRight) {
         cameraControlParams.movementCounter += frameElapsedTime
         const footstepHeight = Math.sin(-Math.PI/2 + cameraControlParams.movementCounter * (cameraControlParams.movementSpeed) / cameraControlParams.footstepFreq) / cameraControlParams.footstepAmplitude + 1/cameraControlParams.footstepAmplitude
-        if (footstepHeight * cameraControlParams.footstepAmplitude > 1.9) {//&& !footstepSound.isPlaying()
-            // footstepSound.play() // Play the footstep at the top of the sin function (that has amplitude [0, 2])
-            //console.log('step!')
+        if (footstepHeight * cameraControlParams.footstepAmplitude > 1.5&& !muted) { //  && !footstepSound.isPlaying 
+            footstepSound.play() // Play the footstep at the top of the sin function (that has amplitude [0, 2])
         }
         camera.position.y = cameraControlParams.initialY + footstepHeight
     } else {
