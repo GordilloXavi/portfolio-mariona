@@ -355,10 +355,24 @@ window.addEventListener('resize', () =>
 /**
  * Camera
  */
+const cameraControlParams = {
+    movementSpeed: 20,
+    velocityDecay: 0.1,
+    stepFrequency: 1,
+    stepAmplitude: 1,
+    initialX: -2,
+    initialY: 0.85,
+    initialZ: -2,
+    isMoving: false,
+    movementCounter: 0,
+    footstepAmplitude: 25,
+    footstepFreq: 3
+}
+
 const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 500)
-camera.position.x = -2
-camera.position.y = 0.85
-camera.position.z = -2
+camera.position.x = cameraControlParams.initialX
+camera.position.y = cameraControlParams.initialY
+camera.position.z = cameraControlParams.initialZ
 camera.lookAt(0, 0.8, 0)
 camera.add( audioListener );
 
@@ -397,22 +411,17 @@ let moveLeft = false
 let moveRight = false
 const velocity = new THREE.Vector3()
 const direction = new THREE.Vector3()
-const controlParams = {
-    movementSpeed: 20,
-    velocityDecay: 0.1,
-    stepFrequency: 1,
-    stepAmplitude: 1
-}
 
-controlsGUIFolder.add(controlParams, 'movementSpeed', 1, 150)
-controlsGUIFolder.add(controlParams, 'velocityDecay', 0.01, 5)
-controlsGUIFolder.add(controlParams, 'stepFrequency', 0, 10)
-controlsGUIFolder.add(controlParams, 'stepAmplitude', 0, 10)
+controlsGUIFolder.add(cameraControlParams, 'movementSpeed', 1, 150).name('movement speed')
+controlsGUIFolder.add(cameraControlParams, 'velocityDecay', 0.01, 5)
+controlsGUIFolder.add(cameraControlParams, 'stepFrequency', 0, 10)
+controlsGUIFolder.add(cameraControlParams, 'footstepAmplitude', 0, 50).name('footseps amplitude')
+controlsGUIFolder.add(cameraControlParams, 'footstepFreq', 0, 10).name('footseps speed')
 
 
 const controls = new PointerLockControls( camera, document.body )
 controls.pointerSpeed = 0.8
-controlsGUIFolder.add(controls, 'pointerSpeed', 0.25, 5)
+controlsGUIFolder.add(controls, 'pointerSpeed', 0.25, 5).name('sensitivity')
 
 
 const blocker = document.getElementById( 'blocker' )
@@ -512,17 +521,9 @@ document.addEventListener( 'keydown', onKeyDown )
 document.addEventListener( 'keyup', onKeyUp )
 document.addEventListener( 'keypress', onKeyPress)
 
-/*
-window.addEventListener('dblclick', () => {
-    if (!document.fullscreenElement) {
-        canvas.requestFullscreen()
-    } else {
-        document.exitFullscreen()
-    }
-});
-*/
-
 // Post-processing setup
+renderer.physicallyCorrectLights = true
+lightsGUIFolder.add(renderer, 'physicallyCorrectLights').name('physically correct lighting')
 const effectComposer = new EffectComposer(renderer);
 effectComposer.setSize(sizes.width, sizes.height)
 effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -548,6 +549,8 @@ bloomGUIFolder.add(unrealBloomPass, 'threshold', 0, 2)
 
 effectComposer.addPass(unrealBloomPass)
 
+// TODO: Motion Blur
+
 const gammaCorrectionPass = new ShaderPass(GammaCorrectionShader)
 effectComposer.addPass(gammaCorrectionPass)
 
@@ -567,25 +570,33 @@ const tick = () =>
     stats.begin()
     // Timer
     timer.update()
-    const elapsedTime = timer.getDelta()
 
-    velocity.x -= velocity.x * elapsedTime * 1/controlParams.velocityDecay
-	velocity.z -= velocity.z * elapsedTime * 1/controlParams.velocityDecay
+    const frameElapsedTime = timer.getDelta()
+
+    velocity.x -= velocity.x * frameElapsedTime * 1/cameraControlParams.velocityDecay
+	velocity.z -= velocity.z * frameElapsedTime * 1/cameraControlParams.velocityDecay
 
     // Movement:
     direction.z = Number( moveForward ) - Number( moveBackward )
 	direction.x = Number( moveRight ) - Number( moveLeft )
     direction.normalize()
 
-    if ( moveForward || moveBackward ) velocity.z -= direction.z * elapsedTime
-    if ( moveLeft || moveRight ) velocity.x -= direction.x * elapsedTime
+    if ( moveForward || moveBackward ) velocity.z -= direction.z * frameElapsedTime
+    if ( moveLeft || moveRight ) velocity.x -= direction.x * frameElapsedTime
 
-    controls.moveRight( - velocity.x * elapsedTime * controlParams.movementSpeed )
-	controls.moveForward( - velocity.z * elapsedTime * controlParams.movementSpeed )
+    controls.moveRight( - velocity.x * frameElapsedTime * cameraControlParams.movementSpeed )
+	controls.moveForward( - velocity.z * frameElapsedTime * cameraControlParams.movementSpeed )
 
     // Footsteps
-    //camera.position.y += 0.001
-
+    if (moveForward || moveBackward || moveLeft || moveRight) {
+        cameraControlParams.movementCounter += frameElapsedTime
+        camera.position.y = cameraControlParams.initialY + Math.sin(cameraControlParams.movementCounter * (cameraControlParams.movementSpeed) / cameraControlParams.footstepFreq) / cameraControlParams.footstepAmplitude
+        
+        cameraControlParams.isMoving = true
+    } else if (cameraControlParams.isMoving) {
+        cameraControlParams.movementCounter = 0
+        camera.position.y = cameraControlParams.initialY
+    }
 
     // Render
     if (postprocessingParams.enabled) {
