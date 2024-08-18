@@ -23,19 +23,20 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
 // Fog
-const fog = new THREE.FogExp2(0x000000, 0.05)
+const fog = new THREE.FogExp2(0x000000, 0.07)
 scene.fog = fog
 gui.add(fog, 'density', 0, 0.6).name('fog density')
 
 // Initialize stats to show FPS
+
+const statsOptions = {
+    showStats: false,
+};
 const stats = new Stats()
 document.body.appendChild(stats.dom)
-//stats.dom.style.display = 'none' // hide by default
+if (!statsOptions.showStats) stats.dom.style.display = 'none'
 
-const options = {
-    showStats: true,
-};
-gui.add(options, 'showStats').name('show FPS').onChange((value) => {
+gui.add(statsOptions, 'showStats').name('show FPS').onChange((value) => {
     stats.dom.style.display = value ? 'block' : 'none';
 });
 
@@ -104,20 +105,26 @@ materialMetalnessTexture.repeat.set(100, 100)
 
 //* TEXTURED PEDESTAL 
 const marbleMaterial = new THREE.MeshStandardMaterial({
-    color: 0xffffff,//0x446611,
     map: materialColorTexture,
     aoMap: materialAOTexture,
     //roughnessMap: materialRoughnessTexture, // activate for some cool visual effects
-    roughness: 0.325,
-    metalness: 1,
+    roughness: 0.23,
+    metalness: 0.85,
     //metalnessMap: materialMetalnessTexture,
     normalMap: materialNormalTexture,
     //displacementMap: materialHeightTexture,
     //displacementBias: 0,
     //displacementScale: 0
 })
+const floorGUIFolder = gui.addFolder('floor')
+floorGUIFolder.close()
+floorGUIFolder.add(marbleMaterial, 'wireframe')
+floorGUIFolder.add(marbleMaterial, 'roughness', 0, 1)
+floorGUIFolder.add(marbleMaterial, 'metalness', 0, 1)
+
 
 //CRYSTAL PEDESTAL
+/*
 const pedestalMaterial = new THREE.MeshPhysicalMaterial()
 pedestalMaterial.color = new THREE.Color(0xffffff)
 pedestalMaterial.metalness = 0
@@ -136,19 +143,18 @@ pedestal.castShadow = true
 pedestal.receiveShadow = true
 
 pedestal.add( sound )
-// scene.add(pedestal)
-
+ scene.add(pedestal)
+*/
 
 //const floorMaterial = new THREE.MeshStandardMaterial(0x000000)
 const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(100, 100, 100, 100),
+    new THREE.PlaneGeometry(50, 50, 10, 10),
+    //new THREE.MeshStandardMaterial()
     marbleMaterial
 )
 floor.rotateX(-Math.PI/2)
 floor.receiveShadow = true
 scene.add(floor)
-
-gui.add(marbleMaterial, 'wireframe')
 
 /**
  * Lights
@@ -306,7 +312,6 @@ gltf_loader.load('/models/pedestal.glb', function(gltf) {
     model = gltf.scene
     model.traverse((child) => {
         if (child.isMesh) {
-            // FIXME: this makes the texture look granulated!!
             child.castShadow = true
             child.receiveShadow = true
             child.material.color = new THREE.Color(0xeeeeee)
@@ -577,6 +582,9 @@ const tick = () =>
 
     controls.moveRight( - velocity.x * elapsedTime * controlParams.movementSpeed )
 	controls.moveForward( - velocity.z * elapsedTime * controlParams.movementSpeed )
+
+    // Footsteps
+    //camera.position.y += 0.001
 
 
     // Render
