@@ -111,6 +111,7 @@ materialMetalnessTexture.repeat.set(100, 100)
 
 //* TEXTURED PEDESTAL 
 const marbleMaterial = new THREE.MeshStandardMaterial({
+    //color: 0x555555,
     map: materialColorTexture,
     aoMap: materialAOTexture,
     //roughnessMap: materialRoughnessTexture, // activate for some cool visual effects
