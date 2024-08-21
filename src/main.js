@@ -46,6 +46,7 @@ gui.add(statsOptions, 'showStats').name('show FPS').onChange((value) => {
 const audioListener = new THREE.AudioListener()
 
 const positionalSound = new THREE.PositionalAudio(audioListener)
+const positionalSound2 = new THREE.PositionalAudio(audioListener)
 
 const audioContext = audioListener.context;
 const lowpassFilter = audioContext.createBiquadFilter();
@@ -60,9 +61,19 @@ const audioLoader = new THREE.AudioLoader();
 audioLoader.load( 'sounds/dumb_rain.mp3', function( buffer ) {
 	positionalSound.setBuffer( buffer )
 	positionalSound.setRefDistance( 3 )
-    positionalSound.setRolloffFactor(5)
+    // positionalSound.setMaxDistance(1) does not work for some reason
+    positionalSound.setRolloffFactor(12)
     positionalSound.setLoop(true)
     positionalSound.setVolume(1)    
+})
+
+audioLoader.load( 'sounds/kaart4.mp3', function( buffer ) {
+	positionalSound2.setBuffer( buffer )
+	positionalSound2.setRefDistance( 3 )
+    // positionalSound2.setMaxDistance(1) // does not work for some reason
+    positionalSound2.setRolloffFactor(12)
+    positionalSound2.setLoop(true)
+    positionalSound2.setVolume(1)    
 })
 
 const footsteps = {
@@ -224,7 +235,7 @@ const shadowBias = -0.01;
 spotLightR.shadow.bias = shadowBias
 
 spotLightR.shadow.camera.near = 1
-spotLightR.shadow.camera.far = 7
+spotLightR.shadow.camera.far = 12
 spotLightR.shadow.camera.fov = 30
 const spotLightRCameraHelper = new THREE.CameraHelper(spotLightR.shadow.camera)
 //scene.add(spotLightRCameraHelper)
@@ -250,7 +261,7 @@ spotLightL.shadow.mapSize.height = 1024
 spotLightL.shadow.bias = shadowBias
 
 spotLightL.shadow.camera.near = 1
-spotLightL.shadow.camera.far = 7
+spotLightL.shadow.camera.far = 12
 spotLightL.shadow.camera.fov = 30
 const spotLightLCameraHelper = new THREE.CameraHelper(spotLightL.shadow.camera)
 //scene.add(spotLightLCameraHelper)
@@ -276,7 +287,7 @@ spotLightF.shadow.mapSize.height = 1024
 spotLightF.shadow.bias = shadowBias
 
 spotLightF.shadow.camera.near = 1
-spotLightF.shadow.camera.far = 7
+spotLightF.shadow.camera.far = 12
 spotLightF.shadow.camera.fov = 30
 const spotLightFCameraHelper = new THREE.CameraHelper(spotLightF.shadow.camera)
 //scene.add(spotLightFCameraHelper)
@@ -301,7 +312,7 @@ spotLightB.shadow.mapSize.height = 1024
 spotLightB.shadow.bias = shadowBias
 
 spotLightB.shadow.camera.near = 1
-spotLightB.shadow.camera.far = 7
+spotLightB.shadow.camera.far = 12
 spotLightB.shadow.camera.fov = 30
 const spotLightBCameraHelper = new THREE.CameraHelper(spotLightB.shadow.camera)
 //scene.add(spotLightBCameraHelper)
@@ -331,21 +342,30 @@ gltf_loader.load('/models/look_2_pose_1.glb', function(gltf) {
         }
     });
 
-    //model.scale.set(0.5, 0.5, 0.5)
-    // look_2_pose_2: 
-    //*/
-    //model.scale.set(1.5, 1.5, 1.5)
     model.position.set(0, 0.4, 0)
     model.rotateY(Math.PI)
 
-    const modelClone = model.clone()
-
     model.add(positionalSound)
-    modelClone.add(positionalSound)
-
-    //scene.add(model)
     look1Group.add(model)
-    look2Group.add(modelClone)
+})
+
+gltf_loader.load('/models/look_3_pose_2.glb', function(gltf) { 
+    model = gltf.scene
+
+    model.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true
+            child.receiveShadow = true
+            const geometry = child.geometry
+            geometry.computeVertexNormals() // Calculate normals
+        }
+    });
+    model.scale.set(2, 2, 2)
+    model.position.set(0, 0.4, 0)
+    model.rotateY(Math.PI)
+
+    model.add(positionalSound2)
+    look2Group.add(model)
 })
 
 gltf_loader.load('/models/studio_light.glb', function(gltf) {
@@ -507,20 +527,28 @@ controls.addEventListener( 'lock', function () {
 
     if (!muted) {
         positionalSound.play()
+        positionalSound2.play()
     }
     positionalSound.setFilter(null)
+    positionalSound2.setFilter(null)
+
     positionalSound.setVolume(1)
-    for (let i = 0; i < footsteps.audios.length; i++) footsteps.audios[i].setFilter(null);
+    positionalSound2.setVolume(1)
+
+    for (let i = 0; i < footsteps.audios.length; i++) footsteps.audios[i].setFilter(null)
 } )
 
 controls.addEventListener( 'unlock', function () {
     blocker.style.display = 'block'
     instructions.style.display = ''
     gui.show()
-    positionalSound.setFilter(lowpassFilter);
-    positionalSound.setVolume(0.7)
+    positionalSound.setFilter(lowpassFilter)
+    positionalSound2.setFilter(lowpassFilter)
 
-    for (let i = 0; i < footsteps.audios.length; i++) footsteps.audios[i].setFilter(lowpassFilter);
+    positionalSound.setVolume(0.7)
+    positionalSound2.setVolume(0.7)
+
+    for (let i = 0; i < footsteps.audios.length; i++) footsteps.audios[i].setFilter(lowpassFilter)
 } )
 
 scene.add( controls.getObject() )
@@ -585,9 +613,11 @@ const onKeyPress = function (event) {
     else if (event.code === 'KeyM') {
         if (positionalSound.isPlaying) {
             positionalSound.pause()
+            positionalSound2.pause()
             muted = true
         } else {
             positionalSound.play()
+            positionalSound2.play()
             muted = false
         }
     }
