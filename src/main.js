@@ -450,7 +450,8 @@ window.addEventListener('resize', () =>
  * Camera
  */
 const cameraControlParams = {
-    movementSpeed: 20, // make it 30 when sprinting
+    movementSpeed: 18,
+    sprintingMovementSpeed: 27,
     velocityDecay: 0.1,
     initialX: -2,
     initialY: 0.85,
@@ -499,6 +500,7 @@ let moveForward = false
 let moveBackward = false
 let moveLeft = false
 let moveRight = false
+let sprinting = false
 const velocity = new THREE.Vector3()
 const direction = new THREE.Vector3()
 
@@ -574,6 +576,11 @@ const onKeyDown = function ( event ) {
         case 'KeyD':
             moveRight = true
             break
+        
+        case 'ShiftRight':
+        case 'ShiftLeft':
+            sprinting = true
+            break
     }
 }
 
@@ -597,6 +604,11 @@ const onKeyUp = function ( event ) {
         case 'ArrowRight':
         case 'KeyD':
             moveRight = false
+            break
+
+        case 'ShiftRight':
+        case 'ShiftLeft':
+            sprinting = false
             break
     }
 }
@@ -676,6 +688,7 @@ const tick = () =>
     timer.update()
 
     const frameElapsedTime = timer.getDelta()
+    const currentMovementSpeed = sprinting ? cameraControlParams.sprintingMovementSpeed : cameraControlParams.movementSpeed
 
     // Controls:
     velocity.x -= velocity.x * frameElapsedTime * 1/cameraControlParams.velocityDecay
@@ -688,15 +701,14 @@ const tick = () =>
     if ( moveForward || moveBackward ) velocity.z -= direction.z * frameElapsedTime
     if ( moveLeft || moveRight ) velocity.x -= direction.x * frameElapsedTime
 
-    controls.moveRight( - velocity.x * frameElapsedTime * cameraControlParams.movementSpeed )
-	controls.moveForward( - velocity.z * frameElapsedTime * cameraControlParams.movementSpeed )
+    controls.moveRight( - velocity.x * frameElapsedTime * currentMovementSpeed )
+	controls.moveForward( - velocity.z * frameElapsedTime * currentMovementSpeed )
 
     // Footsteps
     if (moveForward || moveBackward || moveLeft || moveRight) {
         cameraControlParams.movementCounter += frameElapsedTime
-        const footstepHeight = Math.sin(-Math.PI/2 + cameraControlParams.movementCounter * (cameraControlParams.movementSpeed) / cameraControlParams.footstepFreq) / cameraControlParams.footstepAmplitude + 1/cameraControlParams.footstepAmplitude
+        const footstepHeight = Math.sin(-Math.PI/2 + cameraControlParams.movementCounter * (currentMovementSpeed) / cameraControlParams.footstepFreq) / cameraControlParams.footstepAmplitude + 1/cameraControlParams.footstepAmplitude
         if (footstepHeight * cameraControlParams.footstepAmplitude > 1.5) {
-            // Play the footstep at the top of the sin function (that has amplitude [0, 2])
             let footstepPlaying = false
             for (let i = 0; i < footsteps.audios.length && !footstepPlaying; i++) footstepPlaying = footsteps.audios[i].isPlaying
             
@@ -707,7 +719,7 @@ const tick = () =>
         }
         camera.position.y = cameraControlParams.initialY + footstepHeight
     } else {
-        const footstepHeight = Math.sin(-Math.PI/2 + cameraControlParams.movementCounter * (cameraControlParams.movementSpeed) / cameraControlParams.footstepFreq) / cameraControlParams.footstepAmplitude + 1/cameraControlParams.footstepAmplitude
+        const footstepHeight = Math.sin(-Math.PI/2 + cameraControlParams.movementCounter * (currentMovementSpeed) / cameraControlParams.footstepFreq) / cameraControlParams.footstepAmplitude + 1/cameraControlParams.footstepAmplitude
         if (footstepHeight > 0.0005) {
             camera.position.y = cameraControlParams.initialY + footstepHeight
             cameraControlParams.movementCounter += frameElapsedTime
