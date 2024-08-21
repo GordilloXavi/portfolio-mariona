@@ -46,13 +46,13 @@ gui.add(statsOptions, 'showStats').name('show FPS').onChange((value) => {
 const audioListener = new THREE.AudioListener()
 
 const positionalSound = new THREE.PositionalAudio( audioListener )
-const footstepSound = new THREE.Audio( audioListener )
+
 let muted = false
 
 // load a sound and set it as the PositionalAudio object's buffer
 const audioLoader = new THREE.AudioLoader();
 
-audioLoader.load( 'sounds/kaart4.mp3', function( buffer ) {
+audioLoader.load( 'sounds/dumb_rain.mp3', function( buffer ) {
 	positionalSound.setBuffer( buffer )
 	positionalSound.setRefDistance( 3 )
     positionalSound.setRolloffFactor(5)
@@ -60,11 +60,33 @@ audioLoader.load( 'sounds/kaart4.mp3', function( buffer ) {
     positionalSound.setVolume(1)
 })
 
-audioLoader.load( 'sounds/footstep.mp3', function( buffer ) { 
-	footstepSound.setBuffer( buffer )
-    footstepSound.setLoop(false)
-    footstepSound.setVolume(1)
-})
+const footsteps = {
+    paths: [
+        'sounds/footsteps/left_1.mp3',
+        'sounds/footsteps/left_2.mp3',
+        'sounds/footsteps/left_3.mp3',
+        'sounds/footsteps/right_1.mp3',
+        'sounds/footsteps/right_2.mp3',
+        'sounds/footsteps/right_3.mp3'
+    ],
+    audios: [
+        new THREE.Audio( audioListener ),
+        new THREE.Audio( audioListener ),
+        new THREE.Audio( audioListener ),
+        new THREE.Audio( audioListener ),
+        new THREE.Audio( audioListener ),
+        new THREE.Audio( audioListener )
+    ],
+    currentIndex: 0
+}
+
+for (let i = 0; i < footsteps.paths.length; i++) {
+    audioLoader.load(footsteps.paths[i], function( buffer ) { 
+        footsteps.audios[i].setBuffer( buffer )
+        footsteps.audios[i].setLoop(false)
+        footsteps.audios[i].setVolume(0.5)
+    })
+}
 
 // Environment
 
@@ -269,20 +291,23 @@ scene.add(spotLightB)
 
 let model
 const gltf_loader = new GLTFLoader();
-gltf_loader.load('/models/look_1_leg.glb', function(gltf) { //  TODO: replace with look_1_leg_hd.glb
+gltf_loader.load('/models/look_2_pose_1.glb', function(gltf) { 
     model = gltf.scene
 
     model.traverse((child) => {
         if (child.isMesh) {
             child.castShadow = true
-            //child.receiveShadow = true
+            child.receiveShadow = true
             const geometry = child.geometry
             geometry.computeVertexNormals() // Calculate normals
         }
     });
 
     //model.scale.set(0.5, 0.5, 0.5)
-    model.position.set(0.05, 0.4, 0.05)
+    // look_2_pose_2: 
+    //*/
+    //model.scale.set(1.5, 1.5, 1.5)
+    model.position.set(0, 0.4, 0)
     model.rotateY(Math.PI)
 
     scene.add(model)
@@ -419,6 +444,7 @@ controlsGUIFolder.add(cameraControlParams, 'movementSpeed', 1, 150).name('moveme
 controlsGUIFolder.add(cameraControlParams, 'velocityDecay', 0.01, 5)
 controlsGUIFolder.add(cameraControlParams, 'footstepAmplitude', 0, 100).name('footsteps amplitude')
 controlsGUIFolder.add(cameraControlParams, 'footstepFreq', 0, 10).name('footsteps speed')
+controlsGUIFolder.add(cameraControlParams, 'initialY', 0.50, 1.50).name('camera height')
 //controlsGUIFolder.add(camera, 'fov', 0, 100).name('FOV')
 
 const controls = new PointerLockControls( camera, document.body )
@@ -593,8 +619,15 @@ const tick = () =>
     if (moveForward || moveBackward || moveLeft || moveRight) {
         cameraControlParams.movementCounter += frameElapsedTime
         const footstepHeight = Math.sin(-Math.PI/2 + cameraControlParams.movementCounter * (cameraControlParams.movementSpeed) / cameraControlParams.footstepFreq) / cameraControlParams.footstepAmplitude + 1/cameraControlParams.footstepAmplitude
-        if (footstepHeight * cameraControlParams.footstepAmplitude > 1.5&& !muted) { //  && !footstepSound.isPlaying 
-            footstepSound.play() // Play the footstep at the top of the sin function (that has amplitude [0, 2])
+        if (footstepHeight * cameraControlParams.footstepAmplitude > 1.5) {
+            // Play the footstep at the top of the sin function (that has amplitude [0, 2])
+            let footstepPlaying = false
+            for (let i = 0; i < footsteps.audios.length && !footstepPlaying; i++) footstepPlaying = footsteps.audios[i].isPlaying
+            
+            if (!footstepPlaying) {
+                footsteps.audios[footsteps.currentIndex].play()
+                footsteps.currentIndex = (footsteps.currentIndex + 1) % footsteps.audios.length
+            }
         }
         camera.position.y = cameraControlParams.initialY + footstepHeight
     } else {
