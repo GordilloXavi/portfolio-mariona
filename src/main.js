@@ -45,9 +45,9 @@ gui.add(statsOptions, 'showStats').name('show FPS').onChange((value) => {
 // Audio 
 const audioListener = new THREE.AudioListener()
 
-const positionalSound = new THREE.PositionalAudio( audioListener )
-const audioContext = audioListener.context;
+const positionalSound = new THREE.PositionalAudio(audioListener)
 
+const audioContext = audioListener.context;
 const lowpassFilter = audioContext.createBiquadFilter();
 lowpassFilter.type = 'lowpass';
 lowpassFilter.frequency.setValueAtTime(100, audioContext.currentTime); // Set cutoff frequency
@@ -136,7 +136,7 @@ materialMetalnessTexture.wrapT = THREE.MirroredRepeatWrapping
 materialMetalnessTexture.generateMipmaps = false
 materialMetalnessTexture.repeat.set(100, 100)
 
-//* TEXTURED PEDESTAL 
+//* Floor material
 const marbleMaterial = new THREE.MeshStandardMaterial({
     //color: 0x555555,
     map: materialColorTexture,
@@ -156,6 +156,19 @@ floorGUIFolder.add(marbleMaterial, 'wireframe')
 floorGUIFolder.add(marbleMaterial, 'roughness', 0, 1)
 floorGUIFolder.add(marbleMaterial, 'metalness', 0, 1)
 
+const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(50, 50, 10, 10),
+    marbleMaterial
+)
+floor.rotateX(-Math.PI/2)
+floor.receiveShadow = true
+scene.add(floor)
+
+// ### LOOKS GROUPS ###
+const look1Group = new THREE.Group()
+
+const look2Group = new THREE.Group()
+look2Group.position.set(10, 0, 14)
 
 //CRYSTAL PEDESTAL
 /*
@@ -180,16 +193,6 @@ pedestal.add( sound )
  scene.add(pedestal)
 */
 
-//const floorMaterial = new THREE.MeshStandardMaterial(0x000000)
-const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(50, 50, 10, 10),
-    //new THREE.MeshStandardMaterial()
-    marbleMaterial
-)
-floor.rotateX(-Math.PI/2)
-floor.receiveShadow = true
-scene.add(floor)
-
 /**
  * Lights
  */
@@ -204,7 +207,11 @@ lightsGUIFolder.add(ambientLight, 'intensity', 0, 3).name('ambient light')
 
 const spotLightTargetObject = new THREE.Object3D();
 spotLightTargetObject.position.set(0, 1, 0)
-scene.add(spotLightTargetObject)
+//scene.add(spotLightTargetObject)
+look1Group.add(spotLightTargetObject)
+
+const spotLightTargetObject2 = spotLightTargetObject.clone()
+look2Group.add(spotLightTargetObject2)
 
 const spotLightR = new THREE.SpotLight(0xffffff, 2)
 lightsGUIFolder.add(spotLightR, 'intensity', 0, 5).name('light 1')
@@ -226,7 +233,12 @@ spotLightR.penumbra = 0.4
 spotLightR.position.set(-0.9, 1.4, 0)
 spotLightR.target = spotLightTargetObject
 
-scene.add(spotLightR)
+//scene.add(spotLightR)
+look1Group.add(spotLightR)
+
+const spotLightR2 = spotLightR.clone()
+spotLightR2.target = spotLightTargetObject2
+look2Group.add(spotLightR2)
 
 const spotLightL = new THREE.SpotLight(0xffffff, 2)
 lightsGUIFolder.add(spotLightL, 'intensity', 0, 5).name('light 2')
@@ -243,12 +255,16 @@ spotLightL.shadow.camera.fov = 30
 const spotLightLCameraHelper = new THREE.CameraHelper(spotLightL.shadow.camera)
 //scene.add(spotLightLCameraHelper)
 
-
 spotLightL.penumbra = 0.4
 spotLightL.position.set(0.9, 1.4, 0)
 spotLightL.target = spotLightTargetObject
 
-scene.add(spotLightL)
+//scene.add(spotLightL)
+look1Group.add(spotLightL)
+
+const spotLightL2 = spotLightL.clone()
+spotLightL2.target = spotLightTargetObject2
+look2Group.add(spotLightL2)
 
 const spotLightF = new THREE.SpotLight(0xffffff, 2)
 lightsGUIFolder.add(spotLightF, 'intensity', 0, 5).name('light 3')
@@ -265,12 +281,15 @@ spotLightF.shadow.camera.fov = 30
 const spotLightFCameraHelper = new THREE.CameraHelper(spotLightF.shadow.camera)
 //scene.add(spotLightFCameraHelper)
 
-
 spotLightF.penumbra = 0.4
 spotLightF.position.set(0, 1.4, 0.9)
 spotLightF.target = spotLightTargetObject
 
-scene.add(spotLightF)
+//scene.add(spotLightF)
+look1Group.add(spotLightF)
+const spotLightF2 = spotLightF.clone()
+spotLightF2.target = spotLightTargetObject2
+look2Group.add(spotLightF2)
 
 const spotLightB = new THREE.SpotLight(0xffffff, 2)
 lightsGUIFolder.add(spotLightB, 'intensity', 0, 5).name('light 4')
@@ -287,12 +306,16 @@ spotLightB.shadow.camera.fov = 30
 const spotLightBCameraHelper = new THREE.CameraHelper(spotLightB.shadow.camera)
 //scene.add(spotLightBCameraHelper)
 
-
 spotLightB.penumbra = 0.4
 spotLightB.position.set(0, 1.4, -0.9)
 spotLightB.target = spotLightTargetObject
 
-scene.add(spotLightB)
+//scene.add(spotLightB)
+look1Group.add(spotLightB)
+
+const spotLightB2 = spotLightB.clone()
+spotLightB2.target = spotLightTargetObject2
+look2Group.add(spotLightB2)
 
 let model
 const gltf_loader = new GLTFLoader();
@@ -315,7 +338,14 @@ gltf_loader.load('/models/look_2_pose_1.glb', function(gltf) {
     model.position.set(0, 0.4, 0)
     model.rotateY(Math.PI)
 
-    scene.add(model)
+    const modelClone = model.clone()
+
+    model.add(positionalSound)
+    modelClone.add(positionalSound)
+
+    //scene.add(model)
+    look1Group.add(model)
+    look2Group.add(modelClone)
 })
 
 gltf_loader.load('/models/studio_light.glb', function(gltf) {
@@ -340,7 +370,9 @@ gltf_loader.load('/models/studio_light.glb', function(gltf) {
         const modelClone = model.clone()
         modelClone.position.copy(positions[i])
         modelClone.rotateY(Math.PI / 2 * i)
-        scene.add(modelClone)
+        //scene.add(modelClone)
+        look1Group.add(modelClone)
+        look2Group.add(modelClone.clone())
     }
 })
 
@@ -356,8 +388,13 @@ gltf_loader.load('/models/pedestal.glb', function(gltf) {
     });
 
     model.scale.set(0.25, 0.145, 0.25)
-    scene.add(model)
+    //scene.add(model)
+    look1Group.add(model)
+    look2Group.add(model.clone())
 })
+
+scene.add(look1Group)
+scene.add(look2Group)
 
 /**
  * Sizes
@@ -393,7 +430,7 @@ window.addEventListener('resize', () =>
  * Camera
  */
 const cameraControlParams = {
-    movementSpeed: 20,
+    movementSpeed: 20, // make it 30 when sprinting
     velocityDecay: 0.1,
     initialX: -2,
     initialY: 0.85,
@@ -450,7 +487,6 @@ controlsGUIFolder.add(cameraControlParams, 'velocityDecay', 0.01, 5)
 controlsGUIFolder.add(cameraControlParams, 'footstepAmplitude', 0, 100).name('footsteps amplitude')
 controlsGUIFolder.add(cameraControlParams, 'footstepFreq', 0, 10).name('footsteps speed')
 controlsGUIFolder.add(cameraControlParams, 'initialY', 0.50, 1.50).name('camera height')
-//controlsGUIFolder.add(camera, 'fov', 0, 100).name('FOV')
 
 const controls = new PointerLockControls( camera, document.body )
 controls.pointerSpeed = 0.8
@@ -571,7 +607,7 @@ effectComposer.addPass(new RenderPass(scene, camera));
 
 const unrealBloomPass = new UnrealBloomPass()
 
-unrealBloomPass.strength = 0.3
+unrealBloomPass.strength = 0.17
 unrealBloomPass.radius = 0.1
 unrealBloomPass.threshold = 0.8
 
@@ -611,10 +647,10 @@ const tick = () =>
 
     const frameElapsedTime = timer.getDelta()
 
+    // Controls:
     velocity.x -= velocity.x * frameElapsedTime * 1/cameraControlParams.velocityDecay
 	velocity.z -= velocity.z * frameElapsedTime * 1/cameraControlParams.velocityDecay
 
-    // Movement:
     direction.z = Number( moveForward ) - Number( moveBackward )
 	direction.x = Number( moveRight ) - Number( moveLeft )
     direction.normalize()
