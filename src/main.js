@@ -46,6 +46,11 @@ gui.add(statsOptions, 'showStats').name('show FPS').onChange((value) => {
 const audioListener = new THREE.AudioListener()
 
 const positionalSound = new THREE.PositionalAudio( audioListener )
+const audioContext = audioListener.context;
+
+const lowpassFilter = audioContext.createBiquadFilter();
+lowpassFilter.type = 'lowpass';
+lowpassFilter.frequency.setValueAtTime(100, audioContext.currentTime); // Set cutoff frequency
 
 let muted = false
 
@@ -57,7 +62,7 @@ audioLoader.load( 'sounds/dumb_rain.mp3', function( buffer ) {
 	positionalSound.setRefDistance( 3 )
     positionalSound.setRolloffFactor(5)
     positionalSound.setLoop(true)
-    positionalSound.setVolume(1)
+    positionalSound.setVolume(1)    
 })
 
 const footsteps = {
@@ -87,6 +92,15 @@ for (let i = 0; i < footsteps.paths.length; i++) {
         footsteps.audios[i].setVolume(0.5)
     })
 }
+
+audioLoader.load('sounds/footsteps/r1-nuclear-reactor-hall/mono/r1_omni.wav', function(buffer) {
+    const context = listener.context;
+    const convolver = context.createConvolver();
+    convolver.buffer = buffer;
+
+    // Connect the convolver to the PositionalAudio's output
+    for (let i = 0; i < footsteps.audios.length; i++) footsteps.audios[i].setFilter(convolver)
+});
 
 // Environment
 
@@ -467,12 +481,19 @@ controls.addEventListener( 'lock', function () {
     if (!muted) {
         positionalSound.play()
     }
+    positionalSound.setFilter(null)
+    positionalSound.setVolume(1)
+    for (let i = 0; i < footsteps.audios.length; i++) footsteps.audios[i].setFilter(null);
 } )
 
 controls.addEventListener( 'unlock', function () {
     blocker.style.display = 'block'
     instructions.style.display = ''
     gui.show()
+    positionalSound.setFilter(lowpassFilter);
+    positionalSound.setVolume(0.7)
+
+    for (let i = 0; i < footsteps.audios.length; i++) footsteps.audios[i].setFilter(lowpassFilter);
 } )
 
 scene.add( controls.getObject() )
