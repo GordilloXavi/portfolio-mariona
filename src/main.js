@@ -93,15 +93,6 @@ for (let i = 0; i < footsteps.paths.length; i++) {
     })
 }
 
-audioLoader.load('sounds/footsteps/r1-nuclear-reactor-hall/mono/r1_omni.wav', function(buffer) {
-    const context = listener.context;
-    const convolver = context.createConvolver();
-    convolver.buffer = buffer;
-
-    // Connect the convolver to the PositionalAudio's output
-    for (let i = 0; i < footsteps.audios.length; i++) footsteps.audios[i].setFilter(convolver)
-});
-
 // Environment
 
 // Textures
@@ -604,12 +595,10 @@ const gammaCorrectionPass = new ShaderPass(GammaCorrectionShader)
 effectComposer.addPass(gammaCorrectionPass)
 
 // Antialias
-if(renderer.getPixelRatio() === 1 && !renderer.capabilities.isWebGL2)
+if(renderer.getPixelRatio() == 1 ) // && !renderer.capabilities.isWebGL2
     {
         const smaaPass = new SMAAPass()
         effectComposer.addPass(smaaPass)
-    
-        console.log('Using SMAA')
     }
 
 const timer = new Timer()
