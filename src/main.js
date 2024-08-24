@@ -10,6 +10,7 @@ import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectio
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import { Water } from 'three/addons/objects/Water.js';
 
 
 // Debug
@@ -167,13 +168,45 @@ floorGUIFolder.add(marbleMaterial, 'wireframe')
 floorGUIFolder.add(marbleMaterial, 'roughness', 0, 1)
 floorGUIFolder.add(marbleMaterial, 'metalness', 0, 1)
 
+
+/* WATER */
+
+let water = new Water(
+    new THREE.PlaneGeometry(50, 50),
+    {
+        textureWidth: 2048,
+        textureHeight: 2048,
+        waterNormals: new THREE.TextureLoader().load( 'textures/waternormals.jpg', function ( texture ) {
+
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+        } ),
+        //sunDirection: new THREE.Vector3(),
+        sunColor: 0x111111,
+        waterColor: 0x111111,
+        distortionScale: 3.7,
+        fog: true
+    }
+);
+water.rotation.x = - Math.PI / 2;
+const waterUniforms = water.material.uniforms;
+
+
+gui.add( waterUniforms.distortionScale, 'value', 0, 8, 0.1 ).name( 'water distortionScale' );
+gui.add( waterUniforms.size, 'value', 0.1, 10, 0.1 ).name( 'water size' );
+scene.add(water)
+
+//*/
+
+
+
 const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(50, 50, 10, 10),
     marbleMaterial
 )
 floor.rotateX(-Math.PI/2)
 floor.receiveShadow = true
-scene.add(floor)
+//scene.add(floor)
 
 // ### LOOKS GROUPS ###
 const look1Group = new THREE.Group()
@@ -211,7 +244,7 @@ const lightsGUIFolder = gui.addFolder( 'lights' );
 lightsGUIFolder.close()
 
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.012)
+const ambientLight = new THREE.AmbientLight(0xff0000, 0.012)
 scene.add(ambientLight)
 
 lightsGUIFolder.add(ambientLight, 'intensity', 0, 3).name('ambient light')
@@ -329,7 +362,8 @@ spotLightB2.target = spotLightTargetObject2
 look2Group.add(spotLightB2)
 
 let model
-const gltf_loader = new GLTFLoader();
+const gltf_loader = new GLTFLoader()
+
 gltf_loader.load('/models/look_2_pose_1.glb', function(gltf) { 
     model = gltf.scene
 
@@ -614,24 +648,33 @@ const onKeyUp = function ( event ) {
 }
 
 const onKeyPress = function (event) {
-    if (event.code === 'KeyF') {
-        if (!document.fullscreenElement) {
-            canvas.requestFullscreen()
-            controls.lock()
-        } else {
-            document.exitFullscreen()
-        }
-    }
-    else if (event.code === 'KeyM') {
-        if (positionalSound.isPlaying) {
-            positionalSound.pause()
-            positionalSound2.pause()
-            muted = true
-        } else {
-            positionalSound.play()
-            positionalSound2.play()
-            muted = false
-        }
+    switch ( event.code ) {
+        case 'KeyF':
+            if (!document.fullscreenElement) {
+                canvas.requestFullscreen()
+                controls.lock()
+            } else {
+                document.exitFullscreen()
+            }
+            break
+        
+        case 'KeyM':
+            if (positionalSound.isPlaying) {
+                positionalSound.pause()
+                positionalSound2.pause()
+                muted = true
+            } else {
+                positionalSound.play()
+                positionalSound2.play()
+                muted = false
+            }
+            break
+
+        case 'KeyO':
+            console.log('tab keypress')
+            if (!controls.isLocked) controls.lock()
+            else controls.unlock()
+            
     }
 }
 
@@ -688,6 +731,8 @@ const tick = () =>
     timer.update()
 
     const frameElapsedTime = timer.getDelta()
+    water.material.uniforms[ 'time' ].value += frameElapsedTime / 1 // TODO remove
+
     const currentMovementSpeed = sprinting ? cameraControlParams.sprintingMovementSpeed : cameraControlParams.movementSpeed
 
     // Controls:
