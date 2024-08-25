@@ -182,27 +182,24 @@ const look2Group = new THREE.Group()
 look2Group.position.set(10, 0, 14)
 
 //CRYSTAL PEDESTAL
-/*
 const pedestalMaterial = new THREE.MeshPhysicalMaterial()
 pedestalMaterial.color = new THREE.Color(0xffffff)
 pedestalMaterial.metalness = 0
 pedestalMaterial.roughness = 0.05
 pedestalMaterial.transmission = 0.98
 pedestalMaterial.ior = 1.6
-pedestalMaterial.thickness = 0.5
+pedestalMaterial.thickness = 0.1
 
 
 const pedestal = new THREE.Mesh(
-    new THREE.BoxGeometry(0.5, 0.5, 0.5, 100, 100),
+    new THREE.BoxGeometry(0.5, 0.7, 0.5, 100, 100),
     pedestalMaterial
 )
 
 pedestal.castShadow = true
 pedestal.receiveShadow = true
 
-pedestal.add( sound )
- scene.add(pedestal)
-*/
+look2Group.add(pedestal)
 
 /**
  * Lights
@@ -361,7 +358,7 @@ gltf_loader.load('/models/look_3_pose_2.glb', function(gltf) {
         }
     });
     model.scale.set(2, 2, 2)
-    model.position.set(0, 0.4, 0)
+    model.position.set(0, 0.33, 0)
     model.rotateY(Math.PI)
 
     model.add(positionalSound2)
@@ -410,7 +407,7 @@ gltf_loader.load('/models/pedestal.glb', function(gltf) {
     model.scale.set(0.25, 0.145, 0.25)
     //scene.add(model)
     look1Group.add(model)
-    look2Group.add(model.clone())
+    //look2Group.add(model.clone())
 })
 
 scene.add(look1Group)
@@ -649,9 +646,9 @@ effectComposer.addPass(new RenderPass(scene, camera));
 
 const unrealBloomPass = new UnrealBloomPass()
 
-unrealBloomPass.strength = 0.17
-unrealBloomPass.radius = 0.1
-unrealBloomPass.threshold = 0.8
+unrealBloomPass.strength = 0.3
+unrealBloomPass.radius = 0.2
+unrealBloomPass.threshold = 0.05 //0.8
 
 const bloomGUIFolder = gui.addFolder('bloom')
 bloomGUIFolder.close()
