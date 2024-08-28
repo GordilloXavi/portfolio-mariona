@@ -88,7 +88,7 @@ void main() {
     color = pow(color, vec4(1.0 / 2.2));
     #endif
     #endif
-    gl_FragColor = vec4(.15,.15,.15, color.r);     //<---------- Kinda like tint PLAY WITH THIS
+    gl_FragColor = vec4(.05,.05,.05, color.r);     //<---------- Kinda like tint PLAY WITH THIS
 }
 `;
  
