@@ -43,6 +43,18 @@ body
     cursor: pointer;
 }
 
+#FPSPointer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 2px;
+    background-color: rgb(120, 120, 120);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none; /* So it doesn't block clicks */
+}
+
 @font-face {
     font-family: 'Libre Barcode 39 Text';
     src: url('../static/fonts/barcode/LibreBarcode39Text-Regular.woff2') format('woff2'),

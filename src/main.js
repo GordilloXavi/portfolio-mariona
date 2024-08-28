@@ -10,6 +10,7 @@ import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectio
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import {makeItGrain} from "./../src/Grain.js"
 
 
 // Debug
@@ -39,6 +40,9 @@ if (!statsOptions.showStats) stats.dom.style.display = 'none'
 gui.add(statsOptions, 'showStats').name('show FPS').onChange((value) => {
     stats.dom.style.display = value ? 'block' : 'none'
 })
+
+// Raycaster
+const raycaster = new THREE.Raycaster()
 
 // ###### Scene
 
@@ -105,6 +109,7 @@ for (let i = 0; i < footsteps.paths.length; i++) {
 }
 
 // Environment
+let looksMeshes = []
 
 // Textures
 const textureLoader = new THREE.TextureLoader()
@@ -181,6 +186,12 @@ const look1Group = new THREE.Group()
 const look2Group = new THREE.Group()
 look2Group.position.set(10, 0, 14)
 
+const look3Group = new THREE.Group()
+look3Group.position.set(3, 0, 0)
+
+const look5Group = new THREE.Group()
+look5Group.position.set(-3, 0, 0)
+
 //CRYSTAL PEDESTAL
 const pedestalMaterial = new THREE.MeshPhysicalMaterial()
 pedestalMaterial.color = new THREE.Color(0xffffff)
@@ -208,7 +219,7 @@ const lightsGUIFolder = gui.addFolder( 'lights' );
 lightsGUIFolder.close()
 
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.012)
+const ambientLight = new THREE.AmbientLight(0xffffff, 2) //0.012
 scene.add(ambientLight)
 
 lightsGUIFolder.add(ambientLight, 'intensity', 0, 3).name('ambient light')
@@ -221,7 +232,8 @@ look1Group.add(spotLightTargetObject)
 const spotLightTargetObject2 = spotLightTargetObject.clone()
 look2Group.add(spotLightTargetObject2)
 
-const spotLightR = new THREE.SpotLight(0xffffff, 2)
+const spotLightColor = 0xddddff
+const spotLightR = new THREE.SpotLight(spotLightColor, 2)
 lightsGUIFolder.add(spotLightR, 'intensity', 0, 5).name('light 1')
 
 spotLightR.angle = Math.PI / 4
@@ -248,7 +260,7 @@ const spotLightR2 = spotLightR.clone()
 spotLightR2.target = spotLightTargetObject2
 look2Group.add(spotLightR2)
 
-const spotLightL = new THREE.SpotLight(0xffffff, 2)
+const spotLightL = new THREE.SpotLight(spotLightColor, 2)
 lightsGUIFolder.add(spotLightL, 'intensity', 0, 5).name('light 2')
 
 spotLightL.angle = Math.PI / 4
@@ -274,7 +286,7 @@ const spotLightL2 = spotLightL.clone()
 spotLightL2.target = spotLightTargetObject2
 look2Group.add(spotLightL2)
 
-const spotLightF = new THREE.SpotLight(0xffffff, 2)
+const spotLightF = new THREE.SpotLight(spotLightColor, 2)
 lightsGUIFolder.add(spotLightF, 'intensity', 0, 5).name('light 3')
 
 spotLightF.angle = Math.PI / 4
@@ -299,7 +311,7 @@ const spotLightF2 = spotLightF.clone()
 spotLightF2.target = spotLightTargetObject2
 look2Group.add(spotLightF2)
 
-const spotLightB = new THREE.SpotLight(0xffffff, 2)
+const spotLightB = new THREE.SpotLight(spotLightColor, 2)
 lightsGUIFolder.add(spotLightB, 'intensity', 0, 5).name('light 4')
 
 spotLightB.angle = Math.PI / 4
@@ -344,6 +356,7 @@ gltf_loader.load('/models/look_2_pose_1.glb', function(gltf) {
 
     model.add(positionalSound)
     look1Group.add(model)
+    looksMeshes.push(model)
 })
 
 gltf_loader.load('/models/look_3_pose_2.glb', function(gltf) { 
@@ -363,6 +376,37 @@ gltf_loader.load('/models/look_3_pose_2.glb', function(gltf) {
 
     model.add(positionalSound2)
     look2Group.add(model)
+    looksMeshes.push(model)
+})
+
+gltf_loader.load('/models/look_4_pose_1.glb', function(gltf) { 
+    model = gltf.scene
+
+    model.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true
+            child.receiveShadow = true
+        }
+    });
+    model.scale.set(1.2, 1.2, 1.2)
+    model.position.set(0, -1.05, 0)
+    look3Group.add(model)
+    looksMeshes.push(model)
+})
+
+gltf_loader.load('/models/look_5_pose_1.glb', function(gltf) { 
+    model = gltf.scene
+
+    model.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true
+            child.receiveShadow = true
+        }
+    });
+    model.scale.set(1, 1, 1)
+    model.position.set(0, -0.055, 0)
+    look5Group.add(model)
+    looksMeshes.push(model)
 })
 
 gltf_loader.load('/models/studio_light.glb', function(gltf) {
@@ -376,7 +420,7 @@ gltf_loader.load('/models/studio_light.glb', function(gltf) {
     model.traverse((child) => {
         if (child.isMesh) {
             child.castShadow = true
-            child.material.emissive.set(0xffffff);
+            child.material.emissive.set(spotLightColor);
         }
     });
 
@@ -387,7 +431,6 @@ gltf_loader.load('/models/studio_light.glb', function(gltf) {
         const modelClone = model.clone()
         modelClone.position.copy(positions[i])
         modelClone.rotateY(Math.PI / 2 * i)
-        //scene.add(modelClone)
         look1Group.add(modelClone)
         look2Group.add(modelClone.clone())
     }
@@ -402,16 +445,16 @@ gltf_loader.load('/models/pedestal.glb', function(gltf) {
             child.receiveShadow = true
             child.material.color = new THREE.Color(0xeeeeee)
         }
-    });
+    })
 
     model.scale.set(0.25, 0.145, 0.25)
-    //scene.add(model)
     look1Group.add(model)
-    //look2Group.add(model.clone())
 })
 
 scene.add(look1Group)
 scene.add(look2Group)
+scene.add(look3Group)
+scene.add(look5Group)
 
 /**
  * Sizes
@@ -465,6 +508,9 @@ camera.position.z = cameraControlParams.initialZ
 camera.lookAt(0, 0.8, 0)
 camera.add( audioListener );
 
+makeItGrain( THREE, camera ) // THIS ADDS GRAIN
+
+
 /**
  * Renderer
  */
@@ -505,7 +551,7 @@ controlsGUIFolder.add(cameraControlParams, 'movementSpeed', 1, 150).name('moveme
 controlsGUIFolder.add(cameraControlParams, 'velocityDecay', 0.01, 5)
 controlsGUIFolder.add(cameraControlParams, 'footstepAmplitude', 0, 100).name('footsteps amplitude')
 controlsGUIFolder.add(cameraControlParams, 'footstepFreq', 0, 10).name('footsteps speed')
-controlsGUIFolder.add(cameraControlParams, 'initialY', 0.50, 1.50).name('camera height')
+controlsGUIFolder.add(cameraControlParams, 'initialY', 0, 1.50).name('camera height')
 
 const controls = new PointerLockControls( camera, document.body )
 controls.pointerSpeed = 0.8
@@ -646,21 +692,24 @@ effectComposer.addPass(new RenderPass(scene, camera));
 
 const unrealBloomPass = new UnrealBloomPass()
 
-unrealBloomPass.strength = 0.3
-unrealBloomPass.radius = 0.2
-unrealBloomPass.threshold = 0.05 //0.8
-
 const bloomGUIFolder = gui.addFolder('bloom')
 bloomGUIFolder.close()
 
 let postprocessingParams = {
-    enabled: true
+    enabled: true,
+    threshold: 0.3,
+    strength: 0.5,
+    radius: 0.25
 }
 
+unrealBloomPass.strength = postprocessingParams.strength
+unrealBloomPass.radius = postprocessingParams.radius
+unrealBloomPass.threshold = postprocessingParams.threshold
+
 bloomGUIFolder.add(postprocessingParams, 'enabled')
-bloomGUIFolder.add(unrealBloomPass, 'strength', 0, 2)
-bloomGUIFolder.add(unrealBloomPass, 'radius', 0, 2)
-bloomGUIFolder.add(unrealBloomPass, 'threshold', 0, 2)
+bloomGUIFolder.add(postprocessingParams, 'strength', 0, 2)
+bloomGUIFolder.add(postprocessingParams, 'radius', 0, 2)
+bloomGUIFolder.add(postprocessingParams, 'threshold', 0, 2)
 
 effectComposer.addPass(unrealBloomPass)
 
@@ -725,6 +774,54 @@ const tick = () =>
             camera.position.y = cameraControlParams.initialY
         }
     }
+
+    // Adjust bloom based on distance
+    let closestDistanceToModel = 999999999 // Or infinity
+    for (let i = 0; i < looksMeshes.length; i++) {
+        const distanceToModel = camera.position.distanceTo(model.position)
+        if (distanceToModel < closestDistanceToModel) closestDistanceToModel = distanceToModel
+    }
+
+    if (closestDistanceToModel < 5) {
+        unrealBloomPass.threshold = postprocessingParams.threshold + (5 - closestDistanceToModel) / (5/0.5)
+        unrealBloomPass.radius = postprocessingParams.radius + (5 - closestDistanceToModel) / (5/0.1)
+        unrealBloomPass.strength = postprocessingParams.strength + (5 - closestDistanceToModel) / (5/0.2)
+    } else {
+        unrealBloomPass.threshold = postprocessingParams.threshold
+        unrealBloomPass.strength = postprocessingParams.strength
+        unrealBloomPass.radius = postprocessingParams.radius
+    }
+
+
+    // Detect raycast collisions
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera)
+
+    const intersections = raycaster.intersectObjects(looksMeshes).filter(intersect => intersect.distance <= 5);
+    if (intersections.length) {
+        /*
+        intersections[0].object.material = new THREE.MeshPhysicalMaterial({
+            map: intersections[0].object.material.map,
+            //metalness: 0.6,
+            //roughness: 0.2,
+            clearcoat: 1.0, // Maximum clearcoat
+            clearcoatRoughness: 0.1, // Less rough for shinier clearcoat
+        })
+        */
+
+    } else {
+        /*
+        for (let i = 0; i < looksMeshes.length; i++) {
+            looksMeshes[i].traverse((child) => {
+                if (child.isMesh) {
+                    child.material = new THREE.MeshLambertMaterial({
+                        map: child.material.map,
+                    })
+                }
+            })
+        }
+        */
+    }
+    
 
     // Render
     if (postprocessingParams.enabled) {
