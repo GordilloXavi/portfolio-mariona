@@ -43,6 +43,7 @@ gui.add(statsOptions, 'showStats').name('show FPS').onChange((value) => {
 
 // Raycaster
 const raycaster = new THREE.Raycaster()
+raycaster.setFromCamera(new THREE.Vector2(0, 0), camera)
 
 // ###### Scene
 
@@ -508,7 +509,7 @@ camera.position.z = cameraControlParams.initialZ
 camera.lookAt(0, 0.8, 0)
 camera.add( audioListener );
 
-makeItGrain( THREE, camera ) // THIS ADDS GRAIN
+//makeItGrain( THREE, camera ) // THIS ADDS GRAIN
 
 
 /**
@@ -682,7 +683,16 @@ document.addEventListener( 'keydown', onKeyDown )
 document.addEventListener( 'keyup', onKeyUp )
 document.addEventListener( 'keypress', onKeyPress)
 
-// Post-processing setup
+
+canvas.addEventListener('click', () => {
+    const intersections = raycaster.intersectObjects(looksMeshes).filter(intersect => intersect.distance <= 3);
+    if (intersections.length) {
+        const url = 'https://www.example.com';
+        window.open(url, '_blank');
+    }
+});
+
+// POST-PROCESSING
 renderer.physicallyCorrectLights = true
 lightsGUIFolder.add(renderer, 'physicallyCorrectLights').name('physically correct lighting')
 const effectComposer = new EffectComposer(renderer);
@@ -697,9 +707,14 @@ bloomGUIFolder.close()
 
 let postprocessingParams = {
     enabled: true,
-    threshold: 0.3,
-    strength: 0.5,
-    radius: 0.25
+    threshold: 0.2,
+    closeThreshold: 0.3,
+    strength: 0.7,
+    closeStrength: 0.28,
+    radius: 0.2,
+    closeRadius: 1.2,
+    distanceBloomAtenuation: 5,
+    closeDistanceBloom: 2
 }
 
 unrealBloomPass.strength = postprocessingParams.strength
@@ -778,14 +793,21 @@ const tick = () =>
     // Adjust bloom based on distance
     let closestDistanceToModel = 999999999 // Or infinity
     for (let i = 0; i < looksMeshes.length; i++) {
-        const distanceToModel = camera.position.distanceTo(model.position)
+        //const distanceToModel = camera.position.distanceTo(looksMeshes[i].getWorldPosition(new THREE.Vector3()))
+        const modelWorldPosition = looksMeshes[i].getWorldPosition(new THREE.Vector3())
+        const modelPositionXZ = new THREE.Vector2(modelWorldPosition.x, modelWorldPosition.z)
+        const distanceToModel = new THREE.Vector2(camera.position.x, camera.position.z).distanceTo(modelPositionXZ)
         if (distanceToModel < closestDistanceToModel) closestDistanceToModel = distanceToModel
     }
 
-    if (closestDistanceToModel < 5) {
-        unrealBloomPass.threshold = postprocessingParams.threshold + (5 - closestDistanceToModel) / (5/0.5)
-        unrealBloomPass.radius = postprocessingParams.radius + (5 - closestDistanceToModel) / (5/0.1)
-        unrealBloomPass.strength = postprocessingParams.strength + (5 - closestDistanceToModel) / (5/0.2)
+    if (closestDistanceToModel <= postprocessingParams.distanceBloomAtenuation && closestDistanceToModel > postprocessingParams.closeDistanceBloom) {
+        unrealBloomPass.threshold = postprocessingParams.threshold + (postprocessingParams.distanceBloomAtenuation - closestDistanceToModel) / (5/0.5)
+        unrealBloomPass.radius = postprocessingParams.radius + (postprocessingParams.distanceBloomAtenuation - closestDistanceToModel) / (5/0.1)
+        unrealBloomPass.strength = postprocessingParams.strength + (postprocessingParams.distanceBloomAtenuation - closestDistanceToModel) / (5/0.001)
+    } else if (closestDistanceToModel <= postprocessingParams.closeDistanceBloom) {
+        unrealBloomPass.threshold = postprocessingParams.closeThreshold
+        unrealBloomPass.radius = postprocessingParams.closeRadius
+        unrealBloomPass.strength = postprocessingParams.closeStrength
     } else {
         unrealBloomPass.threshold = postprocessingParams.threshold
         unrealBloomPass.strength = postprocessingParams.strength
@@ -794,22 +816,17 @@ const tick = () =>
 
 
     // Detect raycast collisions
-    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera)
-
-    const intersections = raycaster.intersectObjects(looksMeshes).filter(intersect => intersect.distance <= 5);
+    const intersections = raycaster.intersectObjects(looksMeshes).filter(intersect => intersect.distance <= 3);
     if (intersections.length) {
-        /*
         intersections[0].object.material = new THREE.MeshPhysicalMaterial({
             map: intersections[0].object.material.map,
             //metalness: 0.6,
             //roughness: 0.2,
-            clearcoat: 1.0, // Maximum clearcoat
+            clearcoat: 0.5 + Math.sin(timer.getElapsed()*3),
             clearcoatRoughness: 0.1, // Less rough for shinier clearcoat
         })
-        */
 
     } else {
-        /*
         for (let i = 0; i < looksMeshes.length; i++) {
             looksMeshes[i].traverse((child) => {
                 if (child.isMesh) {
@@ -819,7 +836,6 @@ const tick = () =>
                 }
             })
         }
-        */
     }
     
 
