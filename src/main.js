@@ -19,6 +19,37 @@ gui.close()
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
+/**
+ * Sizes
+ */
+const sizes = {
+    width: window.innerWidth,
+    height: window.innerHeight
+}
+
+/**
+ * Camera
+ */
+
+const cameraControlParams = {
+    movementSpeed: 18,
+    sprintingMovementSpeed: 27,
+    velocityDecay: 0.1,
+    initialX: -2,
+    initialY: 0.85,
+    initialZ: -2,
+    movementCounter: 0,
+    footstepAmplitude: 80,
+    footstepFreq: 1.2
+}
+
+const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 500)
+camera.position.x = cameraControlParams.initialX
+camera.position.y = cameraControlParams.initialY
+camera.position.z = cameraControlParams.initialZ
+camera.lookAt(0, 0.8, 0)
+
+//makeItGrain( THREE, camera ) // THIS ADDS GRAIN
 
 // Scene
 const scene = new THREE.Scene()
@@ -43,12 +74,12 @@ gui.add(statsOptions, 'showStats').name('show FPS').onChange((value) => {
 
 // Raycaster
 const raycaster = new THREE.Raycaster()
-raycaster.setFromCamera(new THREE.Vector2(0, 0), camera)
 
 // ###### Scene
 
 // Audio 
 const audioListener = new THREE.AudioListener()
+camera.add( audioListener );
 
 const positionalSound = new THREE.PositionalAudio(audioListener)
 const positionalSound2 = new THREE.PositionalAudio(audioListener)
@@ -457,14 +488,6 @@ scene.add(look2Group)
 scene.add(look3Group)
 scene.add(look5Group)
 
-/**
- * Sizes
- */
-const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight
-}
-
 // Add GridHelper to the scene
 const gridHelper = new THREE.GridHelper(50, 50)
 //scene.add(gridHelper)
@@ -486,30 +509,6 @@ window.addEventListener('resize', () =>
     effectComposer.setSize(sizes.width, sizes.height)
     effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
-
-/**
- * Camera
- */
-const cameraControlParams = {
-    movementSpeed: 18,
-    sprintingMovementSpeed: 27,
-    velocityDecay: 0.1,
-    initialX: -2,
-    initialY: 0.85,
-    initialZ: -2,
-    movementCounter: 0,
-    footstepAmplitude: 80,
-    footstepFreq: 1.2
-}
-
-const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 500)
-camera.position.x = cameraControlParams.initialX
-camera.position.y = cameraControlParams.initialY
-camera.position.z = cameraControlParams.initialZ
-camera.lookAt(0, 0.8, 0)
-camera.add( audioListener );
-
-//makeItGrain( THREE, camera ) // THIS ADDS GRAIN
 
 
 /**
@@ -684,11 +683,12 @@ document.addEventListener( 'keyup', onKeyUp )
 document.addEventListener( 'keypress', onKeyPress)
 
 
-canvas.addEventListener('click', () => {
-    const intersections = raycaster.intersectObjects(looksMeshes).filter(intersect => intersect.distance <= 3);
-    if (intersections.length) {
-        const url = 'https://www.example.com';
-        window.open(url, '_blank');
+document.addEventListener('click', () => {
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera)
+    const intersections = raycaster.intersectObjects(looksMeshes).filter(intersect => intersect.distance <= 3)
+    if (controls.isLocked && intersections.length) {
+        const url = 'https://www.instagram.com/mariona.urgell/'
+        window.open(url, '_blank')
     }
 });
 
@@ -816,6 +816,7 @@ const tick = () =>
 
 
     // Detect raycast collisions
+    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera)
     const intersections = raycaster.intersectObjects(looksMeshes).filter(intersect => intersect.distance <= 3);
     if (intersections.length) {
         intersections[0].object.material = new THREE.MeshPhysicalMaterial({
