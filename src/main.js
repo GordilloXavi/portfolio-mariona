@@ -40,7 +40,8 @@ const cameraControlParams = {
     initialZ: -2,
     movementCounter: 0,
     footstepAmplitude: 80,
-    footstepFreq: 1.2
+    footstepFreq: 1.2,
+    clickDistance: 4
 }
 
 const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 500)
@@ -49,7 +50,7 @@ camera.position.y = cameraControlParams.initialY
 camera.position.z = cameraControlParams.initialZ
 camera.lookAt(0, 0.8, 0)
 
-//makeItGrain( THREE, camera ) // THIS ADDS GRAIN
+makeItGrain( THREE, camera ) // THIS ADDS GRAIN
 
 // Scene
 const scene = new THREE.Scene()
@@ -485,8 +486,8 @@ gltf_loader.load('/models/pedestal.glb', function(gltf) {
 
 scene.add(look1Group)
 scene.add(look2Group)
-scene.add(look3Group)
-scene.add(look5Group)
+//scene.add(look3Group)
+//scene.add(look5Group)
 
 // Add GridHelper to the scene
 const gridHelper = new THREE.GridHelper(50, 50)
@@ -685,7 +686,7 @@ document.addEventListener( 'keypress', onKeyPress)
 
 document.addEventListener('click', () => {
     raycaster.setFromCamera(new THREE.Vector2(0, 0), camera)
-    const intersections = raycaster.intersectObjects(looksMeshes).filter(intersect => intersect.distance <= 3)
+    const intersections = raycaster.intersectObjects(looksMeshes).filter(intersect => intersect.distance <= cameraControlParams.clickDistance)
     if (controls.isLocked && intersections.length) {
         const url = 'https://www.instagram.com/mariona.urgell/'
         window.open(url, '_blank')
@@ -708,13 +709,13 @@ bloomGUIFolder.close()
 let postprocessingParams = {
     enabled: true,
     threshold: 0.2,
-    closeThreshold: 0.3,
-    strength: 0.7,
+    closeThreshold: 0.7,
+    strength: 0.82,
     closeStrength: 0.28,
     radius: 0.2,
     closeRadius: 1.2,
-    distanceBloomAtenuation: 5,
-    closeDistanceBloom: 2
+    distanceBloomAtenuation: 7,
+    closeDistanceBloom: 2.75
 }
 
 unrealBloomPass.strength = postprocessingParams.strength
@@ -722,13 +723,16 @@ unrealBloomPass.radius = postprocessingParams.radius
 unrealBloomPass.threshold = postprocessingParams.threshold
 
 bloomGUIFolder.add(postprocessingParams, 'enabled')
-bloomGUIFolder.add(postprocessingParams, 'strength', 0, 2)
-bloomGUIFolder.add(postprocessingParams, 'radius', 0, 2)
-bloomGUIFolder.add(postprocessingParams, 'threshold', 0, 2)
+bloomGUIFolder.add(postprocessingParams, 'strength', 0, 2).name('bloom strenght far')
+bloomGUIFolder.add(postprocessingParams, 'radius', 0, 2).name('bloom radius far')
+bloomGUIFolder.add(postprocessingParams, 'threshold', 0, 2).name('bloom threshold far')
+bloomGUIFolder.add(postprocessingParams, 'closeStrength', 0, 2).name('bloom strenght close')
+bloomGUIFolder.add(postprocessingParams, 'closeRadius', 0, 2).name('bloom radius close')
+bloomGUIFolder.add(postprocessingParams, 'closeThreshold', 0, 2).name('bloom threshold close')
+bloomGUIFolder.add(postprocessingParams, 'distanceBloomAtenuation', 0, 50).name('bloom far distance')
+bloomGUIFolder.add(postprocessingParams, 'closeDistanceBloom', 0, 10).name('bloom near distance')
 
 effectComposer.addPass(unrealBloomPass)
-
-// TODO: Motion Blur
 
 const gammaCorrectionPass = new ShaderPass(GammaCorrectionShader)
 effectComposer.addPass(gammaCorrectionPass)
@@ -790,20 +794,19 @@ const tick = () =>
         }
     }
 
-    // Adjust bloom based on distance
-    let closestDistanceToModel = 999999999 // Or infinity
+    let closestDistanceToModel = 999999999 // infinity
     for (let i = 0; i < looksMeshes.length; i++) {
-        //const distanceToModel = camera.position.distanceTo(looksMeshes[i].getWorldPosition(new THREE.Vector3()))
         const modelWorldPosition = looksMeshes[i].getWorldPosition(new THREE.Vector3())
         const modelPositionXZ = new THREE.Vector2(modelWorldPosition.x, modelWorldPosition.z)
         const distanceToModel = new THREE.Vector2(camera.position.x, camera.position.z).distanceTo(modelPositionXZ)
         if (distanceToModel < closestDistanceToModel) closestDistanceToModel = distanceToModel
     }
 
-    if (closestDistanceToModel <= postprocessingParams.distanceBloomAtenuation && closestDistanceToModel > postprocessingParams.closeDistanceBloom) {
-        unrealBloomPass.threshold = postprocessingParams.threshold + (postprocessingParams.distanceBloomAtenuation - closestDistanceToModel) / (5/0.5)
-        unrealBloomPass.radius = postprocessingParams.radius + (postprocessingParams.distanceBloomAtenuation - closestDistanceToModel) / (5/0.1)
-        unrealBloomPass.strength = postprocessingParams.strength + (postprocessingParams.distanceBloomAtenuation - closestDistanceToModel) / (5/0.001)
+    if (closestDistanceToModel <= postprocessingParams.distanceBloomAtenuation && closestDistanceToModel > postprocessingParams.closeDistanceBloom) {        
+        unrealBloomPass.threshold = postprocessingParams.threshold + (postprocessingParams.distanceBloomAtenuation - closestDistanceToModel) * Math.abs((postprocessingParams.threshold - postprocessingParams.closeThreshold) / (postprocessingParams.distanceBloomAtenuation - postprocessingParams.closeDistanceBloom))
+        unrealBloomPass.radius = postprocessingParams.radius + (postprocessingParams.distanceBloomAtenuation - closestDistanceToModel) * Math.abs((postprocessingParams.radius - postprocessingParams.closeRadius) / (postprocessingParams.distanceBloomAtenuation - postprocessingParams.closeDistanceBloom))
+        unrealBloomPass.strength = postprocessingParams.strength - (postprocessingParams.distanceBloomAtenuation - closestDistanceToModel) * Math.abs((postprocessingParams.strength - postprocessingParams.closeStrength) / (postprocessingParams.distanceBloomAtenuation - postprocessingParams.closeDistanceBloom))
+
     } else if (closestDistanceToModel <= postprocessingParams.closeDistanceBloom) {
         unrealBloomPass.threshold = postprocessingParams.closeThreshold
         unrealBloomPass.radius = postprocessingParams.closeRadius
@@ -817,14 +820,12 @@ const tick = () =>
 
     // Detect raycast collisions
     raycaster.setFromCamera(new THREE.Vector2(0, 0), camera)
-    const intersections = raycaster.intersectObjects(looksMeshes).filter(intersect => intersect.distance <= 3);
+    const intersections = raycaster.intersectObjects(looksMeshes).filter(intersect => intersect.distance <= cameraControlParams.clickDistance);
     if (intersections.length) {
         intersections[0].object.material = new THREE.MeshPhysicalMaterial({
             map: intersections[0].object.material.map,
-            //metalness: 0.6,
-            //roughness: 0.2,
             clearcoat: 0.5 + Math.sin(timer.getElapsed()*3),
-            clearcoatRoughness: 0.1, // Less rough for shinier clearcoat
+            clearcoatRoughness: 0.05, // Less rough for shinier clearcoat
         })
 
     } else {
