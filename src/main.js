@@ -1,11 +1,11 @@
 import * as THREE from 'three'
-import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js'
 import { Timer } from 'three/addons/misc/Timer.js'
 import GUI from 'lil-gui'
 import Stats from 'stats.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
@@ -32,6 +32,7 @@ const sizes = {
  */
 
 const cameraControlParams = {
+    pointerEnabled: false,
     movementSpeed: 18,
     sprintingMovementSpeed: 27,
     velocityDecay: 0.1,
@@ -80,20 +81,20 @@ const raycaster = new THREE.Raycaster()
 
 // Audio 
 const audioListener = new THREE.AudioListener()
-camera.add( audioListener );
+camera.add( audioListener )
 
 const positionalSound = new THREE.PositionalAudio(audioListener)
 const positionalSound2 = new THREE.PositionalAudio(audioListener)
 
-const audioContext = audioListener.context;
-const lowpassFilter = audioContext.createBiquadFilter();
-lowpassFilter.type = 'lowpass';
-lowpassFilter.frequency.setValueAtTime(100, audioContext.currentTime); // Set cutoff frequency
+const audioContext = audioListener.context
+const lowpassFilter = audioContext.createBiquadFilter()
+lowpassFilter.type = 'lowpass'
+lowpassFilter.frequency.setValueAtTime(100, audioContext.currentTime) // Set cutoff frequency
 
 let muted = false
 
 // load a sound and set it as the PositionalAudio object's buffer
-const audioLoader = new THREE.AudioLoader();
+const audioLoader = new THREE.AudioLoader()
 
 audioLoader.load( 'sounds/dumb_rain.mp3', function( buffer ) {
 	positionalSound.setBuffer( buffer )
@@ -227,7 +228,7 @@ look5Group.position.set(-3, 0, 0)
 
 //CRYSTAL PEDESTAL
 const pedestalMaterial = new THREE.MeshPhysicalMaterial()
-pedestalMaterial.color = new THREE.Color(0xffffff)
+pedestalMaterial.color = new THREE.Color(0x555555)
 pedestalMaterial.metalness = 0
 pedestalMaterial.roughness = 0.05
 pedestalMaterial.transmission = 0.98
@@ -248,7 +249,7 @@ look2Group.add(pedestal)
 /**
  * Lights
  */
-const lightsGUIFolder = gui.addFolder( 'lights' );
+const lightsGUIFolder = gui.addFolder( 'lights' )
 lightsGUIFolder.close()
 
 // Ambient light
@@ -257,7 +258,7 @@ scene.add(ambientLight)
 
 lightsGUIFolder.add(ambientLight, 'intensity', 0, 3).name('ambient light')
 
-const spotLightTargetObject = new THREE.Object3D();
+const spotLightTargetObject = new THREE.Object3D()
 spotLightTargetObject.position.set(0, 1, 0)
 //scene.add(spotLightTargetObject)
 look1Group.add(spotLightTargetObject)
@@ -270,10 +271,10 @@ const spotLightR = new THREE.SpotLight(spotLightColor, 2)
 lightsGUIFolder.add(spotLightR, 'intensity', 0, 5).name('light 1')
 
 spotLightR.angle = Math.PI / 4
-spotLightR.castShadow = true;
+spotLightR.castShadow = true
 spotLightR.shadow.mapSize.width = 1024
 spotLightR.shadow.mapSize.height = 1024
-const shadowBias = -0.01;
+const shadowBias = -0.01
 spotLightR.shadow.bias = shadowBias
 
 spotLightR.shadow.camera.near = 1
@@ -371,7 +372,7 @@ spotLightB2.target = spotLightTargetObject2
 look2Group.add(spotLightB2)
 
 let model
-const gltf_loader = new GLTFLoader();
+const gltf_loader = new GLTFLoader()
 gltf_loader.load('/models/look_2_pose_1.glb', function(gltf) { 
     model = gltf.scene
 
@@ -382,7 +383,7 @@ gltf_loader.load('/models/look_2_pose_1.glb', function(gltf) {
             const geometry = child.geometry
             geometry.computeVertexNormals() // Calculate normals
         }
-    });
+    })
 
     model.position.set(0, 0.4, 0)
     model.rotateY(Math.PI)
@@ -402,7 +403,7 @@ gltf_loader.load('/models/look_3_pose_2.glb', function(gltf) {
             const geometry = child.geometry
             geometry.computeVertexNormals() // Calculate normals
         }
-    });
+    })
     model.scale.set(2, 2, 2)
     model.position.set(0, 0.33, 0)
     model.rotateY(Math.PI)
@@ -420,7 +421,7 @@ gltf_loader.load('/models/look_4_pose_1.glb', function(gltf) {
             child.castShadow = true
             child.receiveShadow = true
         }
-    });
+    })
     model.scale.set(1.2, 1.2, 1.2)
     model.position.set(0, -1.05, 0)
     look3Group.add(model)
@@ -435,7 +436,7 @@ gltf_loader.load('/models/look_5_pose_1.glb', function(gltf) {
             child.castShadow = true
             child.receiveShadow = true
         }
-    });
+    })
     model.scale.set(1, 1, 1)
     model.position.set(0, -0.055, 0)
     look5Group.add(model)
@@ -453,9 +454,9 @@ gltf_loader.load('/models/studio_light.glb', function(gltf) {
     model.traverse((child) => {
         if (child.isMesh) {
             child.castShadow = true
-            child.material.emissive.set(spotLightColor);
+            child.material.emissive.set(spotLightColor)
         }
-    });
+    })
 
     model.scale.set(0.5, 0.5, 0.5)
     model.rotateY(Math.PI/2)
@@ -489,9 +490,76 @@ scene.add(look2Group)
 //scene.add(look3Group)
 //scene.add(look5Group)
 
-// Add GridHelper to the scene
-const gridHelper = new THREE.GridHelper(50, 50)
-//scene.add(gridHelper)
+
+// Paths between looks
+const particlePathParams = {
+    density: 100,
+    color: new THREE.Color(0xffffff),
+    size: .02,
+    distanceFromModel: 1
+}
+
+const pathGUIFolfer = gui.addFolder('particles path')
+pathGUIFolfer.add(particlePathParams, 'density', 0, 1000).name('particles density').onChange(regeneratePath(path))
+pathGUIFolfer.addColor(particlePathParams, 'color').name('particles color').onChange(regeneratePath(path))
+pathGUIFolfer.add(particlePathParams, 'size', 0, 1).name('particles size').onChange(regeneratePath(path))
+
+function randomNormal() {
+    let u1 = Math.random()
+    let u2 = Math.random()
+    
+    // Apply the Box-Muller transform
+    let randStdNormal = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2)
+    
+    return randStdNormal // This is a normally distributed random number
+}
+
+const createParticlePath = (position1, position2) => {
+    const distance = position1.distanceTo(position2)
+    const particleCount = Math.floor(particlePathParams.density * distance)
+    console.log('particle count: ')
+    console.log(particleCount)
+
+    const geometry = new THREE.BufferGeometry()
+    const positions = new Float32Array(particleCount * 3)
+    for(let i = 0; i < particleCount; i++)
+    {
+        const d = particlePathParams.distanceFromModel
+        const origin = new THREE.Vector3(position1.x - d, position1.y, position1.z - d)
+        const destination = new THREE.Vector3(position2.x, position2.y, position2.z)
+
+        const i3 = i * 3
+        const x = origin.x + Math.random() * (origin.x - destination.x)
+        const distanceProportion =  x / (origin.x - destination.x)
+        const y = origin.y + (origin.y - destination.y) * distanceProportion + cameraControlParams.initialY / 2
+        const z = origin.z + (origin.z - destination.z) * distanceProportion
+
+        positions[i3] =  -x + randomNormal() / 7
+        positions[i3 + 1] = y + randomNormal() / 7
+        positions[i3 + 2] = -z + randomNormal() / 7
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+
+    const material = new THREE.PointsMaterial({
+        color: particlePathParams.color,
+        size: particlePathParams.size,
+        sizeAttenuation: true, // play with this
+        depthWrite: true, // play with this
+        blending: THREE.AdditiveBlending // play with this
+    })
+    return new THREE.Points(geometry, material)
+}
+
+const regeneratePath = (pathObject) => {
+    pathObject.geometry.dispose()
+    pathObject.material.dispose()
+    scene.remove(pathObject)
+    scene.add(createParticlePath(look1Group.position, look2Group.position))
+}
+
+let path = createParticlePath(look1Group.position, look2Group.position)
+scene.add(path)
 
 window.addEventListener('resize', () =>
 {
@@ -548,6 +616,10 @@ let sprinting = false
 const velocity = new THREE.Vector3()
 const direction = new THREE.Vector3()
 
+controlsGUIFolder.add(cameraControlParams, 'pointerEnabled').name('pointer enabled').onChange(() => {
+    const pointer = document.getElementById('FPSPointer')
+    pointer.style.display = cameraControlParams.pointerEnabled ? 'block' : 'none'
+})
 controlsGUIFolder.add(cameraControlParams, 'movementSpeed', 1, 150).name('movement speed')
 controlsGUIFolder.add(cameraControlParams, 'velocityDecay', 0.01, 5)
 controlsGUIFolder.add(cameraControlParams, 'footstepAmplitude', 0, 100).name('footsteps amplitude')
@@ -591,8 +663,8 @@ controls.addEventListener( 'unlock', function () {
     positionalSound.setFilter(lowpassFilter)
     positionalSound2.setFilter(lowpassFilter)
 
-    positionalSound.setVolume(0.7)
-    positionalSound2.setVolume(0.7)
+    positionalSound.setVolume(0.1)
+    positionalSound2.setVolume(0.1)
 
     for (let i = 0; i < footsteps.audios.length; i++) footsteps.audios[i].setFilter(lowpassFilter)
 } )
@@ -691,15 +763,15 @@ document.addEventListener('click', () => {
         const url = 'https://www.instagram.com/mariona.urgell/'
         window.open(url, '_blank')
     }
-});
+})
 
 // POST-PROCESSING
 renderer.physicallyCorrectLights = true
 lightsGUIFolder.add(renderer, 'physicallyCorrectLights').name('physically correct lighting')
-const effectComposer = new EffectComposer(renderer);
+const effectComposer = new EffectComposer(renderer)
 effectComposer.setSize(sizes.width, sizes.height)
 effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-effectComposer.addPass(new RenderPass(scene, camera));
+effectComposer.addPass(new RenderPass(scene, camera))
 
 const unrealBloomPass = new UnrealBloomPass()
 
@@ -820,7 +892,7 @@ const tick = () =>
 
     // Detect raycast collisions
     raycaster.setFromCamera(new THREE.Vector2(0, 0), camera)
-    const intersections = raycaster.intersectObjects(looksMeshes).filter(intersect => intersect.distance <= cameraControlParams.clickDistance);
+    const intersections = raycaster.intersectObjects(looksMeshes).filter(intersect => intersect.distance <= cameraControlParams.clickDistance)
     if (intersections.length) {
         intersections[0].object.material = new THREE.MeshPhysicalMaterial({
             map: intersections[0].object.material.map,
