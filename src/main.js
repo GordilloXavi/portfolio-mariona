@@ -10,7 +10,10 @@ import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectio
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
-import {makeItGrain} from "./../src/Grain.js"
+
+import {makeItGrain} from "./Grain.js"
+import pathVertexShader from './shaders/particle_path/vertex.glsl'
+import pathFragmentShader from './shaders/particle_path/fragment.glsl'
 
 
 // Debug
@@ -36,7 +39,7 @@ const cameraControlParams = {
     movementSpeed: 18,
     sprintingMovementSpeed: 27,
     velocityDecay: 0.1,
-    initialX: -2,
+    initialX: 2,
     initialY: 0.85,
     initialZ: -2,
     movementCounter: 0,
@@ -52,6 +55,19 @@ camera.position.z = cameraControlParams.initialZ
 camera.lookAt(0, 0.8, 0)
 
 makeItGrain( THREE, camera ) // THIS ADDS GRAIN
+
+/**
+ * Renderer
+ */
+const renderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    antialias: true,
+})
+renderer.shadowMap.enabled = true
+renderer.colorSpace = THREE.SRGBColorSpace
+
+renderer.setSize(sizes.width, sizes.height)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 // Scene
 const scene = new THREE.Scene()
@@ -98,18 +114,18 @@ const audioLoader = new THREE.AudioLoader()
 
 audioLoader.load( 'sounds/dumb_rain.mp3', function( buffer ) {
 	positionalSound.setBuffer( buffer )
-	positionalSound.setRefDistance( 3 )
+	positionalSound.setRefDistance( 3.5 )
     // positionalSound.setMaxDistance(1) does not work for some reason
-    positionalSound.setRolloffFactor(12)
+    positionalSound.setRolloffFactor(30)
     positionalSound.setLoop(true)
     positionalSound.setVolume(1)    
 })
 
-audioLoader.load( 'sounds/kaart4.mp3', function( buffer ) {
+audioLoader.load( 'sounds/river.mp3', function( buffer ) {
 	positionalSound2.setBuffer( buffer )
-	positionalSound2.setRefDistance( 3 )
+	positionalSound2.setRefDistance( 3.5 )
     // positionalSound2.setMaxDistance(1) // does not work for some reason
-    positionalSound2.setRolloffFactor(12)
+    positionalSound2.setRolloffFactor(30)
     positionalSound2.setLoop(true)
     positionalSound2.setVolume(1)    
 })
@@ -154,37 +170,37 @@ materialColorTexture.wrapT = THREE.MirroredRepeatWrapping
 materialColorTexture.generateMipmaps = false
 materialColorTexture.minFilter = THREE.NearestFilter
 materialColorTexture.magFilter = THREE.NearestFilter
-materialColorTexture.repeat.set(100, 100)
+materialColorTexture.repeat.set(200, 200)
 
 const materialAOTexture = textureLoader.load('textures/kint/ao.png')
 materialAOTexture.wrapS = THREE.MirroredRepeatWrapping
 materialAOTexture.wrapT = THREE.MirroredRepeatWrapping
 materialAOTexture.generateMipmaps = false
-materialAOTexture.repeat.set(100, 100)
+materialAOTexture.repeat.set(200, 200)
 
 const materialHeightTexture = textureLoader.load('textures/kint/height.png')
 materialHeightTexture.wrapS = THREE.MirroredRepeatWrapping
 materialHeightTexture.wrapT = THREE.MirroredRepeatWrapping
 materialHeightTexture.generateMipmaps = false
-materialHeightTexture.repeat.set(100, 100)
+materialHeightTexture.repeat.set(200, 200)
 
 const materialNormalTexture = textureLoader.load('textures/kint/normal.png')
 materialNormalTexture.wrapS = THREE.MirroredRepeatWrapping
 materialNormalTexture.wrapT = THREE.MirroredRepeatWrapping
 materialNormalTexture.generateMipmaps = false
-materialNormalTexture.repeat.set(100, 100)
+materialNormalTexture.repeat.set(200, 200)
 
 const materialRoughnessTexture = textureLoader.load('textures/kint/roughness.png')
 materialRoughnessTexture.wrapS = THREE.MirroredRepeatWrapping
 materialRoughnessTexture.wrapT = THREE.MirroredRepeatWrapping
 materialRoughnessTexture.generateMipmaps = false
-materialRoughnessTexture.repeat.set(100, 100)
+materialRoughnessTexture.repeat.set(200, 200)
 
 const materialMetalnessTexture = textureLoader.load('textures/kint/metalness.png')
 materialMetalnessTexture.wrapS = THREE.MirroredRepeatWrapping
 materialMetalnessTexture.wrapT = THREE.MirroredRepeatWrapping
 materialMetalnessTexture.generateMipmaps = false
-materialMetalnessTexture.repeat.set(100, 100)
+materialMetalnessTexture.repeat.set(200, 200)
 
 //* Floor material
 const marbleMaterial = new THREE.MeshStandardMaterial({
@@ -207,7 +223,7 @@ floorGUIFolder.add(marbleMaterial, 'roughness', 0, 1)
 floorGUIFolder.add(marbleMaterial, 'metalness', 0, 1)
 
 const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(50, 50, 10, 10),
+    new THREE.PlaneGeometry(100, 100, 10, 10),
     marbleMaterial
 )
 floor.rotateX(-Math.PI/2)
@@ -218,7 +234,7 @@ scene.add(floor)
 const look1Group = new THREE.Group()
 
 const look2Group = new THREE.Group()
-look2Group.position.set(10, 0, 14)
+look2Group.position.set(25, 0, 33)
 
 const look3Group = new THREE.Group()
 look3Group.position.set(3, 0, 0)
@@ -493,69 +509,84 @@ scene.add(look2Group)
 
 // Paths between looks
 const particlePathParams = {
-    density: 100,
+    density: 10,
     color: new THREE.Color(0xffffff),
-    size: .02,
-    distanceFromModel: 1
+    size: 10,
+    distanceFromModel: 3
 }
 
-const pathGUIFolfer = gui.addFolder('particles path')
-pathGUIFolfer.add(particlePathParams, 'density', 0, 1000).name('particles density').onChange(regeneratePath(path))
-pathGUIFolfer.addColor(particlePathParams, 'color').name('particles color').onChange(regeneratePath(path))
-pathGUIFolfer.add(particlePathParams, 'size', 0, 1).name('particles size').onChange(regeneratePath(path))
-
-function randomNormal() {
-    let u1 = Math.random()
-    let u2 = Math.random()
+function randomNormal(mean = 0, standardDeviation = 1) {
+    let u1 = Math.random();
+    let u2 = Math.random();
     
-    // Apply the Box-Muller transform
-    let randStdNormal = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2)
+    // Box-Muller transform
+    let z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
     
-    return randStdNormal // This is a normally distributed random number
+    // Adjust for mean and standard deviation
+    return z0 * standardDeviation + mean;
 }
 
+let particlePathMaterial = null
 const createParticlePath = (position1, position2) => {
     const distance = position1.distanceTo(position2)
     const particleCount = Math.floor(particlePathParams.density * distance)
-    console.log('particle count: ')
-    console.log(particleCount)
 
     const geometry = new THREE.BufferGeometry()
+
     const positions = new Float32Array(particleCount * 3)
+    const scales = new Float32Array(particleCount)
+
     for(let i = 0; i < particleCount; i++)
     {
-        const d = particlePathParams.distanceFromModel
-        const origin = new THREE.Vector3(position1.x - d, position1.y, position1.z - d)
+        //const d = particlePathParams.distanceFromModel
+        //let destinationDirection = new THREE.Vector3(position2.x - position1.x, position2.y - position1.y, position2.z - position1.z)
+        //let originDirection = new THREE.Vector3(position1.x - position2.x, position1.y - position2.y, position1.z - position2.z)
+        //destinationDirection.normalize()
+        //originDirection.normalize()
+
+        const origin = new THREE.Vector3(position1.x, position1.y, position1.z)
         const destination = new THREE.Vector3(position2.x, position2.y, position2.z)
 
         const i3 = i * 3
-        const x = origin.x + Math.random() * (origin.x - destination.x)
+        let x = origin.x + Math.random() * (origin.x - destination.x)
         const distanceProportion =  x / (origin.x - destination.x)
-        const y = origin.y + (origin.y - destination.y) * distanceProportion + cameraControlParams.initialY / 2
-        const z = origin.z + (origin.z - destination.z) * distanceProportion
+        let y = origin.y + (origin.y - destination.y) * distanceProportion + cameraControlParams.initialY / 2
+        let z = origin.z + (origin.z - destination.z) * distanceProportion
 
-        positions[i3] =  -x + randomNormal() / 7
-        positions[i3 + 1] = y + randomNormal() / 7
-        positions[i3 + 2] = -z + randomNormal() / 7
+        x = -x + randomNormal(0, 0.1)
+        y = y + randomNormal(0, 0.1)
+        z = -z + randomNormal(0, 0.1)
+
+        const particlePosition = new THREE.Vector3(x, y, z)
+        if (particlePosition.distanceTo(origin) < particlePathParams.distanceFromModel || particlePosition.distanceTo(destination) < particlePathParams.distanceFromModel) {
+            y = -1
+        }
+
+        positions[i3] = x
+        positions[i3 + 1] = y
+        positions[i3 + 2] = z
+    }
+
+    for (let i = 0; i < particleCount; i++) {
+        scales[i] = (particlePathParams.size + (0.5 - Math.random()) * particlePathParams.size) * renderer.getPixelRatio() / 2
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geometry.setAttribute('aScale', new THREE.BufferAttribute(scales, 1))
 
-    const material = new THREE.PointsMaterial({
-        color: particlePathParams.color,
-        size: particlePathParams.size,
-        sizeAttenuation: true, // play with this
-        depthWrite: true, // play with this
-        blending: THREE.AdditiveBlending // play with this
+    particlePathMaterial = new THREE.ShaderMaterial({
+        depthWrite: true,
+        blending: THREE.AdditiveBlending,
+        vertexColors: true,
+        vertexShader: pathVertexShader,
+        fragmentShader: pathFragmentShader,
+        uniforms: {
+            uSize: {value: particlePathParams.size},
+            uTime: {value: 0}
+        },
+        
     })
-    return new THREE.Points(geometry, material)
-}
-
-const regeneratePath = (pathObject) => {
-    pathObject.geometry.dispose()
-    pathObject.material.dispose()
-    scene.remove(pathObject)
-    scene.add(createParticlePath(look1Group.position, look2Group.position))
+    return new THREE.Points(geometry, particlePathMaterial)
 }
 
 let path = createParticlePath(look1Group.position, look2Group.position)
@@ -578,30 +609,6 @@ window.addEventListener('resize', () =>
     effectComposer.setSize(sizes.width, sizes.height)
     effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
-
-
-/**
- * Renderer
- */
-const renderer = new THREE.WebGLRenderer({
-    canvas: canvas,
-    antialias: true,
-})
-renderer.shadowMap.enabled = true
-renderer.colorSpace = THREE.SRGBColorSpace
-
-renderer.toneMapping = THREE.ACESFilmicToneMapping
-
-gui.add(renderer, 'toneMapping', {
-    ACESFilmic: THREE.ACESFilmicToneMapping,
-    No: THREE.NoToneMapping,
-    Linear: THREE.LinearToneMapping,
-    Reinhard: THREE.ReinhardToneMapping,
-    Cineon: THREE.CineonToneMapping
-})
-
-renderer.setSize(sizes.width, sizes.height)
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 
 // Controls
@@ -780,7 +787,7 @@ bloomGUIFolder.close()
 
 let postprocessingParams = {
     enabled: true,
-    threshold: 0.2,
+    threshold: 0.05,
     closeThreshold: 0.7,
     strength: 0.82,
     closeStrength: 0.28,
@@ -896,8 +903,8 @@ const tick = () =>
     if (intersections.length) {
         intersections[0].object.material = new THREE.MeshPhysicalMaterial({
             map: intersections[0].object.material.map,
-            clearcoat: 0.5 + Math.sin(timer.getElapsed()*3),
-            clearcoatRoughness: 0.05, // Less rough for shinier clearcoat
+            clearcoat: 1,
+            clearcoatRoughness: 0.1, // Less rough for shinier clearcoat
         })
 
     } else {
@@ -910,6 +917,11 @@ const tick = () =>
                 }
             })
         }
+    }
+
+    // Update time uniforms
+    if (particlePathMaterial != null) {
+        particlePathMaterial.uniforms.uTime.value = timer.getElapsed()
     }
     
 
