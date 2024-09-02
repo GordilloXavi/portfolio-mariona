@@ -269,7 +269,7 @@ const lightsGUIFolder = gui.addFolder( 'lights' )
 lightsGUIFolder.close()
 
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.012)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.03)
 scene.add(ambientLight)
 
 lightsGUIFolder.add(ambientLight, 'intensity', 0, 3).name('ambient light')
