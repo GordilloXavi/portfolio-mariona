@@ -116,7 +116,7 @@ audioLoader.load( 'sounds/dumb_rain.mp3', function( buffer ) {
 	positionalSound.setBuffer( buffer )
 	positionalSound.setRefDistance( 3.5 )
     // positionalSound.setMaxDistance(1) does not work for some reason
-    positionalSound.setRolloffFactor(30)
+    positionalSound.setRolloffFactor(20)
     positionalSound.setLoop(true)
     positionalSound.setVolume(1)    
 })
@@ -125,7 +125,7 @@ audioLoader.load( 'sounds/river.mp3', function( buffer ) {
 	positionalSound2.setBuffer( buffer )
 	positionalSound2.setRefDistance( 3.5 )
     // positionalSound2.setMaxDistance(1) // does not work for some reason
-    positionalSound2.setRolloffFactor(30)
+    positionalSound2.setRolloffFactor(20)
     positionalSound2.setLoop(true)
     positionalSound2.setVolume(1)    
 })
@@ -512,7 +512,7 @@ const particlePathParams = {
     density: 10,
     color: new THREE.Color(0xffffff),
     size: 10,
-    distanceFromModel: 3
+    distanceFromModel: 2
 }
 
 function randomNormal(mean = 0, standardDeviation = 1) {
@@ -550,7 +550,7 @@ const createParticlePath = (position1, position2) => {
         const i3 = i * 3
         let x = origin.x + Math.random() * (origin.x - destination.x)
         const distanceProportion =  x / (origin.x - destination.x)
-        let y = origin.y + (origin.y - destination.y) * distanceProportion + cameraControlParams.initialY / 2
+        let y = origin.y + (origin.y - destination.y) * distanceProportion + cameraControlParams.initialY / 1.7
         let z = origin.z + (origin.z - destination.z) * distanceProportion
 
         x = -x + randomNormal(0, 0.1)
@@ -558,6 +558,7 @@ const createParticlePath = (position1, position2) => {
         z = -z + randomNormal(0, 0.1)
 
         const particlePosition = new THREE.Vector3(x, y, z)
+        // FIXME / TODO: this is an awful way to make the particles near the groups disappear. 
         if (particlePosition.distanceTo(origin) < particlePathParams.distanceFromModel || particlePosition.distanceTo(destination) < particlePathParams.distanceFromModel) {
             y = -1
         }
@@ -565,9 +566,8 @@ const createParticlePath = (position1, position2) => {
         positions[i3] = x
         positions[i3 + 1] = y
         positions[i3 + 2] = z
-    }
 
-    for (let i = 0; i < particleCount; i++) {
+        // Set scale
         scales[i] = (particlePathParams.size + (0.5 - Math.random()) * particlePathParams.size) * renderer.getPixelRatio() / 2
     }
 
@@ -793,8 +793,8 @@ let postprocessingParams = {
     closeStrength: 0.28,
     radius: 0.2,
     closeRadius: 1.2,
-    distanceBloomAtenuation: 7,
-    closeDistanceBloom: 2.75
+    distanceBloomAtenuation: 10,
+    closeDistanceBloom: 5.5
 }
 
 unrealBloomPass.strength = postprocessingParams.strength
@@ -918,6 +918,11 @@ const tick = () =>
             })
         }
     }
+
+    // Adjust floor metalness
+    const group12Distance = look1Group.position.distanceTo(look2Group.position) 
+    const distanceBasedMetalness = (Math.max(group12Distance/2 ,camera.position.distanceTo(look2Group.position)) -  group12Distance/2) / group12Distance * 2
+    floor.material.metalness = Math.min(0.85, distanceBasedMetalness)
 
     // Update time uniforms
     if (particlePathMaterial != null) {
