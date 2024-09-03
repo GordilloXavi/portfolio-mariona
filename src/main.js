@@ -10,8 +10,8 @@ import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectio
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import { FilmPass } from 'three/addons/postprocessing/FilmPass.js'
 
-import {makeItGrain} from "./Grain.js"
 import pathVertexShader from './shaders/particle_path/vertex.glsl'
 import pathFragmentShader from './shaders/particle_path/fragment.glsl'
 
@@ -54,7 +54,6 @@ camera.position.y = cameraControlParams.initialY
 camera.position.z = cameraControlParams.initialZ
 camera.lookAt(0, 0.8, 0)
 
-makeItGrain( THREE, camera ) // THIS ADDS GRAIN
 
 /**
  * Renderer
@@ -96,38 +95,60 @@ const raycaster = new THREE.Raycaster()
 // ###### Scene
 
 // Audio 
+const audioParams = {
+    look1SongVolume: 1,
+    look1Speed: 1,
+    look2SongVolume: 1,
+    look2Speed: 1,
+    footstepsVolume: 0.5,
+    distanceFactor: 3.5,
+    rolloffFactor: 20,
+    menuVolume: 0.1,
+}
+const audioGUIFolder = gui.addFolder('audio')
+audioGUIFolder.close()
+audioGUIFolder.add(audioParams, 'menuVolume', 0, 1).name('menu volume')
+
 const audioListener = new THREE.AudioListener()
 camera.add( audioListener )
 
 const positionalSound = new THREE.PositionalAudio(audioListener)
 const positionalSound2 = new THREE.PositionalAudio(audioListener)
 
-const audioContext = audioListener.context
-const lowpassFilter = audioContext.createBiquadFilter()
-lowpassFilter.type = 'lowpass'
-lowpassFilter.frequency.setValueAtTime(100, audioContext.currentTime) // Set cutoff frequency
-
 let muted = false
 
 // load a sound and set it as the PositionalAudio object's buffer
 const audioLoader = new THREE.AudioLoader()
 
-audioLoader.load( 'sounds/dumb_rain.mp3', function( buffer ) {
+audioLoader.load( 'sounds/kaart4.mp3', function( buffer ) {
 	positionalSound.setBuffer( buffer )
-	positionalSound.setRefDistance( 3.5 )
+	positionalSound.setRefDistance( audioParams.distanceFactor )
     // positionalSound.setMaxDistance(1) does not work for some reason
-    positionalSound.setRolloffFactor(20)
+    positionalSound.setRolloffFactor(audioParams.rolloffFactor)
     positionalSound.setLoop(true)
-    positionalSound.setVolume(1)    
+    positionalSound.setVolume(audioParams.look1SongVolume)
+    audioGUIFolder.add(audioParams, 'look1SongVolume', 0, 1).name('look 1 music volume').onChange(() => {
+        positionalSound.setVolume(audioParams.look1SongVolume)
+    })
+
+    audioGUIFolder.add(audioParams, 'look1Speed', 0, 3).name('look 1 playback speed').onChange(() => {
+        positionalSound.setPlaybackRate(audioParams.look1Speed)
+    })
 })
 
 audioLoader.load( 'sounds/river.mp3', function( buffer ) {
 	positionalSound2.setBuffer( buffer )
-	positionalSound2.setRefDistance( 3.5 )
+	positionalSound2.setRefDistance( audioParams.distanceFactor )
     // positionalSound2.setMaxDistance(1) // does not work for some reason
-    positionalSound2.setRolloffFactor(20)
+    positionalSound2.setRolloffFactor(audioParams.rolloffFactor)
     positionalSound2.setLoop(true)
-    positionalSound2.setVolume(1)    
+    positionalSound2.setVolume(audioParams.look2SongVolume)    
+    audioGUIFolder.add(audioParams, 'look2SongVolume', 0, 1).name('look 2 music volume').onChange(() => {
+        positionalSound2.setVolume(audioParams.look2SongVolume)
+    })
+    audioGUIFolder.add(audioParams, 'look2Speed', 0, 3).name('look 2 playback speed').onChange(() => {
+        positionalSound2.setPlaybackRate(audioParams.look2Speed)
+    })
 })
 
 const footsteps = {
@@ -154,9 +175,16 @@ for (let i = 0; i < footsteps.paths.length; i++) {
     audioLoader.load(footsteps.paths[i], function( buffer ) { 
         footsteps.audios[i].setBuffer( buffer )
         footsteps.audios[i].setLoop(false)
-        footsteps.audios[i].setVolume(0.5)
+        footsteps.audios[i].setVolume(audioParams.footstepsVolume)
     })
 }
+
+const audioContext = audioListener.context
+
+// Low pass filter for menu
+const lowpassFilter = audioContext.createBiquadFilter()
+lowpassFilter.type = 'lowpass'
+lowpassFilter.frequency.setValueAtTime(100, audioContext.currentTime) // Set cutoff frequency
 
 // Environment
 let looksMeshes = []
@@ -582,7 +610,7 @@ const createParticlePath = (position1, position2) => {
         fragmentShader: pathFragmentShader,
         uniforms: {
             uSize: {value: particlePathParams.size},
-            uTime: {value: 0}
+            uTime: {value: 0},
         },
         
     })
@@ -657,8 +685,8 @@ controls.addEventListener( 'lock', function () {
     positionalSound.setFilter(null)
     positionalSound2.setFilter(null)
 
-    positionalSound.setVolume(1)
-    positionalSound2.setVolume(1)
+    positionalSound.setVolume(audioParams.look1SongVolume)
+    positionalSound2.setVolume(audioParams.look2SongVolume)
 
     for (let i = 0; i < footsteps.audios.length; i++) footsteps.audios[i].setFilter(null)
 } )
@@ -670,8 +698,8 @@ controls.addEventListener( 'unlock', function () {
     positionalSound.setFilter(lowpassFilter)
     positionalSound2.setFilter(lowpassFilter)
 
-    positionalSound.setVolume(0.1)
-    positionalSound2.setVolume(0.1)
+    positionalSound.setVolume(audioParams.menuVolume)
+    positionalSound2.setVolume(audioParams.menuVolume)
 
     for (let i = 0; i < footsteps.audios.length; i++) footsteps.audios[i].setFilter(lowpassFilter)
 } )
@@ -794,7 +822,9 @@ let postprocessingParams = {
     radius: 0.2,
     closeRadius: 1.2,
     distanceBloomAtenuation: 10,
-    closeDistanceBloom: 5.5
+    closeDistanceBloom: 5.5,
+    filmGrainIntensity: 0.4,
+    grayscale: false
 }
 
 unrealBloomPass.strength = postprocessingParams.strength
@@ -812,6 +842,12 @@ bloomGUIFolder.add(postprocessingParams, 'distanceBloomAtenuation', 0, 50).name(
 bloomGUIFolder.add(postprocessingParams, 'closeDistanceBloom', 0, 10).name('bloom near distance')
 
 effectComposer.addPass(unrealBloomPass)
+
+// Film grain
+const effectFilm = new FilmPass( postprocessingParams.filmGrainIntensity, postprocessingParams.greyscale )
+effectComposer.addPass(effectFilm)
+bloomGUIFolder.add(postprocessingParams, 'filmGrainIntensity', 0, 5).name('film grain intensity').onChange(() => {effectFilm.uniforms.intensity.value = postprocessingParams.filmGrainIntensity})
+bloomGUIFolder.add(postprocessingParams, 'grayscale').onChange(() => {effectFilm.uniforms.grayscale.value = postprocessingParams.grayscale})
 
 const gammaCorrectionPass = new ShaderPass(GammaCorrectionShader)
 effectComposer.addPass(gammaCorrectionPass)
