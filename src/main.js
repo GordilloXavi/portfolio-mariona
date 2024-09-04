@@ -537,7 +537,7 @@ scene.add(look2Group)
 
 // Paths between looks
 const particlePathParams = {
-    density: 10,
+    density: 30,
     color: new THREE.Color(0xffffff),
     size: 10,
     distanceFromModel: 2
@@ -608,11 +608,14 @@ const createParticlePath = (position1, position2) => {
         vertexColors: true,
         vertexShader: pathVertexShader,
         fragmentShader: pathFragmentShader,
-        uniforms: {
-            uSize: {value: particlePathParams.size},
-            uTime: {value: 0},
-        },
-        
+        uniforms: THREE.UniformsUtils.merge( [
+            THREE.UniformsLib[ 'fog' ],
+            {
+                uSize: {value: particlePathParams.size},
+                uTime: {value: 0},
+            }
+        ] ),
+        fog: true
     })
     return new THREE.Points(geometry, particlePathMaterial)
 }
