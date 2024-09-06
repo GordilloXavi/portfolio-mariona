@@ -3,6 +3,7 @@ import { PointerLockControls } from 'three/addons/controls/PointerLockControls.j
 import { Timer } from 'three/addons/misc/Timer.js'
 import GUI from 'lil-gui'
 import Stats from 'stats.js'
+import { gsap } from 'gsap'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
@@ -39,9 +40,9 @@ const cameraControlParams = {
     movementSpeed: 18,
     sprintingMovementSpeed: 27,
     velocityDecay: 0.1,
-    initialX: 2,
+    initialX: 27,//2,
     initialY: 0.85,
-    initialZ: -2,
+    initialZ: 33 + 2,//-2,
     movementCounter: 0,
     footstepAmplitude: 80,
     footstepFreq: 1.2,
@@ -52,7 +53,10 @@ const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 
 camera.position.x = cameraControlParams.initialX
 camera.position.y = cameraControlParams.initialY
 camera.position.z = cameraControlParams.initialZ
-camera.lookAt(0, 0.8, 0)
+camera.lookAt(25, 0.85, 33)
+
+// Controls
+const controls = new PointerLockControls( camera, document.body )
 
 
 /**
@@ -67,6 +71,10 @@ renderer.colorSpace = THREE.SRGBColorSpace
 
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+// Loading manager, for intro loading screen
+const introLoadingManager = new THREE.LoadingManager()
+
 
 // Scene
 const scene = new THREE.Scene()
@@ -94,6 +102,42 @@ const raycaster = new THREE.Raycaster()
 
 // ###### Scene
 
+// Loading screen
+const loadingScreenGeometry = new THREE.PlaneGeometry(2, 2, 1, 1)
+const loadingScreenMaterial = new THREE.ShaderMaterial({
+    transparent: true,
+    vertexShader: `
+        void main()
+        {
+            gl_Position = vec4(position, 1.0);
+        }
+    `,
+    fragmentShader: `
+        uniform float uAlpha;
+        void main()
+        {
+            gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
+        }
+    `,
+    uniforms:
+    {
+        uAlpha: { value: 1.0 }
+    },
+})
+const loadingScreen = new THREE.Mesh(loadingScreenGeometry, loadingScreenMaterial)
+//scene.add(loadingScreen)
+
+introLoadingManager.onLoad = function ( ) {
+	console.log( 'Loading complete!');
+    //blocker.style.display = 'block'
+    //instructions.style.display = ''
+    //gsap.to(loadingScreenMaterial.uniforms.uAlpha, { duration: 3, value: 0 })
+}
+
+introLoadingManager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
+	//console.log( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+}
+
 // Audio 
 const audioParams = {
     look1SongVolume: 1,
@@ -118,7 +162,7 @@ const positionalSound2 = new THREE.PositionalAudio(audioListener)
 let muted = false
 
 // load a sound and set it as the PositionalAudio object's buffer
-const audioLoader = new THREE.AudioLoader()
+const audioLoader = new THREE.AudioLoader(introLoadingManager)
 
 audioLoader.load( 'sounds/kaart4.mp3', function( buffer ) {
 	positionalSound.setBuffer( buffer )
@@ -190,7 +234,7 @@ lowpassFilter.frequency.setValueAtTime(100, audioContext.currentTime) // Set cut
 let looksMeshes = []
 
 // Textures
-const textureLoader = new THREE.TextureLoader()
+const textureLoader = new THREE.TextureLoader(introLoadingManager)
 const materialColorTexture = textureLoader.load('textures/kint/color.png')
 materialColorTexture.colorSpace = THREE.SRGBColorSpace
 materialColorTexture.wrapS = THREE.MirroredRepeatWrapping
@@ -264,15 +308,9 @@ const look1Group = new THREE.Group()
 const look2Group = new THREE.Group()
 look2Group.position.set(25, 0, 33)
 
-const look3Group = new THREE.Group()
-look3Group.position.set(3, 0, 0)
-
-const look5Group = new THREE.Group()
-look5Group.position.set(-3, 0, 0)
-
 //CRYSTAL PEDESTAL
 const pedestalMaterial = new THREE.MeshPhysicalMaterial()
-pedestalMaterial.color = new THREE.Color(0x555555)
+pedestalMaterial.color = new THREE.Color(0xffffff)
 pedestalMaterial.metalness = 0
 pedestalMaterial.roughness = 0.05
 pedestalMaterial.transmission = 0.98
@@ -296,6 +334,9 @@ look2Group.add(pedestal)
 const lightsGUIFolder = gui.addFolder( 'lights' )
 lightsGUIFolder.close()
 
+const look1LightsGUIFolder = lightsGUIFolder.addFolder('look 1')
+look1LightsGUIFolder.close()
+
 // Ambient light
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.03)
 scene.add(ambientLight)
@@ -307,12 +348,9 @@ spotLightTargetObject.position.set(0, 1, 0)
 //scene.add(spotLightTargetObject)
 look1Group.add(spotLightTargetObject)
 
-const spotLightTargetObject2 = spotLightTargetObject.clone()
-look2Group.add(spotLightTargetObject2)
-
 const spotLightColor = 0xddddff
 const spotLightR = new THREE.SpotLight(spotLightColor, 2)
-lightsGUIFolder.add(spotLightR, 'intensity', 0, 5).name('light 1')
+look1LightsGUIFolder.add(spotLightR, 'intensity', 0, 5).name('light 1')
 
 spotLightR.angle = Math.PI / 4
 spotLightR.castShadow = true
@@ -324,22 +362,15 @@ spotLightR.shadow.bias = shadowBias
 spotLightR.shadow.camera.near = 1
 spotLightR.shadow.camera.far = 12
 spotLightR.shadow.camera.fov = 30
-const spotLightRCameraHelper = new THREE.CameraHelper(spotLightR.shadow.camera)
-//scene.add(spotLightRCameraHelper)
 
 spotLightR.penumbra = 0.4
 spotLightR.position.set(-0.9, 1.4, 0)
 spotLightR.target = spotLightTargetObject
 
-//scene.add(spotLightR)
 look1Group.add(spotLightR)
 
-const spotLightR2 = spotLightR.clone()
-spotLightR2.target = spotLightTargetObject2
-look2Group.add(spotLightR2)
-
 const spotLightL = new THREE.SpotLight(spotLightColor, 2)
-lightsGUIFolder.add(spotLightL, 'intensity', 0, 5).name('light 2')
+look1LightsGUIFolder.add(spotLightL, 'intensity', 0, 5).name('light 2')
 
 spotLightL.angle = Math.PI / 4
 spotLightL.castShadow = true
@@ -350,22 +381,17 @@ spotLightL.shadow.bias = shadowBias
 spotLightL.shadow.camera.near = 1
 spotLightL.shadow.camera.far = 12
 spotLightL.shadow.camera.fov = 30
-const spotLightLCameraHelper = new THREE.CameraHelper(spotLightL.shadow.camera)
-//scene.add(spotLightLCameraHelper)
 
 spotLightL.penumbra = 0.4
 spotLightL.position.set(0.9, 1.4, 0)
 spotLightL.target = spotLightTargetObject
 
-//scene.add(spotLightL)
+
 look1Group.add(spotLightL)
 
-const spotLightL2 = spotLightL.clone()
-spotLightL2.target = spotLightTargetObject2
-look2Group.add(spotLightL2)
 
 const spotLightF = new THREE.SpotLight(spotLightColor, 2)
-lightsGUIFolder.add(spotLightF, 'intensity', 0, 5).name('light 3')
+look1LightsGUIFolder.add(spotLightF, 'intensity', 0, 5).name('light 3')
 
 spotLightF.angle = Math.PI / 4
 spotLightF.castShadow = true
@@ -376,21 +402,16 @@ spotLightF.shadow.bias = shadowBias
 spotLightF.shadow.camera.near = 1
 spotLightF.shadow.camera.far = 12
 spotLightF.shadow.camera.fov = 30
-const spotLightFCameraHelper = new THREE.CameraHelper(spotLightF.shadow.camera)
-//scene.add(spotLightFCameraHelper)
 
 spotLightF.penumbra = 0.4
 spotLightF.position.set(0, 1.4, 0.9)
 spotLightF.target = spotLightTargetObject
 
-//scene.add(spotLightF)
 look1Group.add(spotLightF)
-const spotLightF2 = spotLightF.clone()
-spotLightF2.target = spotLightTargetObject2
-look2Group.add(spotLightF2)
+
 
 const spotLightB = new THREE.SpotLight(spotLightColor, 2)
-lightsGUIFolder.add(spotLightB, 'intensity', 0, 5).name('light 4')
+look1LightsGUIFolder.add(spotLightB, 'intensity', 0, 5).name('light 4')
 
 spotLightB.angle = Math.PI / 4
 spotLightB.castShadow = true
@@ -401,22 +422,16 @@ spotLightB.shadow.bias = shadowBias
 spotLightB.shadow.camera.near = 1
 spotLightB.shadow.camera.far = 12
 spotLightB.shadow.camera.fov = 30
-const spotLightBCameraHelper = new THREE.CameraHelper(spotLightB.shadow.camera)
-//scene.add(spotLightBCameraHelper)
 
 spotLightB.penumbra = 0.4
 spotLightB.position.set(0, 1.4, -0.9)
 spotLightB.target = spotLightTargetObject
 
-//scene.add(spotLightB)
+
 look1Group.add(spotLightB)
 
-const spotLightB2 = spotLightB.clone()
-spotLightB2.target = spotLightTargetObject2
-look2Group.add(spotLightB2)
-
 let model
-const gltf_loader = new GLTFLoader()
+const gltf_loader = new GLTFLoader(introLoadingManager)
 gltf_loader.load('/models/look_2_pose_1.glb', function(gltf) { 
     model = gltf.scene
 
@@ -434,56 +449,6 @@ gltf_loader.load('/models/look_2_pose_1.glb', function(gltf) {
 
     model.add(positionalSound)
     look1Group.add(model)
-    looksMeshes.push(model)
-})
-
-gltf_loader.load('/models/look_3_pose_2.glb', function(gltf) { 
-    model = gltf.scene
-
-    model.traverse((child) => {
-        if (child.isMesh) {
-            child.castShadow = true
-            child.receiveShadow = true
-            const geometry = child.geometry
-            geometry.computeVertexNormals() // Calculate normals
-        }
-    })
-    model.scale.set(2, 2, 2)
-    model.position.set(0, 0.33, 0)
-    model.rotateY(Math.PI)
-
-    model.add(positionalSound2)
-    look2Group.add(model)
-    looksMeshes.push(model)
-})
-
-gltf_loader.load('/models/look_4_pose_1.glb', function(gltf) { 
-    model = gltf.scene
-
-    model.traverse((child) => {
-        if (child.isMesh) {
-            child.castShadow = true
-            child.receiveShadow = true
-        }
-    })
-    model.scale.set(1.2, 1.2, 1.2)
-    model.position.set(0, -1.05, 0)
-    look3Group.add(model)
-    looksMeshes.push(model)
-})
-
-gltf_loader.load('/models/look_5_pose_1.glb', function(gltf) { 
-    model = gltf.scene
-
-    model.traverse((child) => {
-        if (child.isMesh) {
-            child.castShadow = true
-            child.receiveShadow = true
-        }
-    })
-    model.scale.set(1, 1, 1)
-    model.position.set(0, -0.055, 0)
-    look5Group.add(model)
     looksMeshes.push(model)
 })
 
@@ -510,10 +475,8 @@ gltf_loader.load('/models/studio_light.glb', function(gltf) {
         modelClone.position.copy(positions[i])
         modelClone.rotateY(Math.PI / 2 * i)
         look1Group.add(modelClone)
-        look2Group.add(modelClone.clone())
     }
 })
-
 
 gltf_loader.load('/models/pedestal.glb', function(gltf) {
     model = gltf.scene
@@ -530,9 +493,84 @@ gltf_loader.load('/models/pedestal.glb', function(gltf) {
 })
 
 scene.add(look1Group)
+
+// Look 2 Group
+
+// Model: 
+gltf_loader.load('/models/look_1.glb', function(gltf) { 
+    model = gltf.scene
+
+    model.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true
+            child.receiveShadow = true
+            const geometry = child.geometry
+            geometry.computeVertexNormals() // Calculate normals
+        }
+    })
+    model.scale.set(1, 1, 1)
+    model.position.set(0, 0.33, 0)
+    model.rotateY(Math.PI)
+
+    model.add(positionalSound2)
+    look2Group.add(model)
+    looksMeshes.push(model)
+})
+
+// Lights:
+const look2LightsGUIFolder = lightsGUIFolder.addFolder('look 2')
+look2LightsGUIFolder.close()
+
+const look2SpotLightParams = {
+    height: 2.5,
+    intensity: 10,
+    penumbra: 0.4,
+    angle: Math.PI/4
+}
+
+const look2SpotLightTargetObject = new THREE.Object3D()
+look2SpotLightTargetObject.position.set(look2Group.position)
+//scene.add(spotLightTargetObject)
+//look2Group.add(look2SpotLightTargetObject)
+
+const look2spotLightColor = 0xffffff
+const look2SpotLight = new THREE.SpotLight(look2spotLightColor, 10)
+
+look2SpotLight.angle = Math.PI / 4
+look2SpotLight.castShadow = true
+look2SpotLight.shadow.mapSize.width = 1024
+look2SpotLight.shadow.mapSize.height = 1024
+//const shadowBias = -0.01
+look2SpotLight.shadow.bias = shadowBias
+
+look2SpotLight.shadow.camera.near = 1
+look2SpotLight.shadow.camera.far = 12
+look2SpotLight.shadow.camera.fov = 30
+
+look2SpotLight.penumbra = 0.4
+look2SpotLight.position.set(0, 2.5, 0)
+
+look2SpotLight.target = pedestal
+
+const look2SpotLightCameraHelper = new THREE.CameraHelper(look2SpotLight.shadow.camera)
+scene.add(look2SpotLightCameraHelper)
+
+look2LightsGUIFolder.add(look2SpotLightParams, 'intensity', 0, 50).name('spotlight').onChange(() => {
+    look2SpotLight.intensity = look2SpotLightParams.intensity
+})
+look2LightsGUIFolder.add(look2SpotLightParams, 'penumbra', 0, 1).name('penumbra').onChange(() => {
+    look2SpotLight.penumbra = look2SpotLightParams.penumbra
+})
+look2LightsGUIFolder.add(look2SpotLightParams, 'angle', 0, Math.PI/2).name('angle').onChange(() => {
+    look2SpotLight.angle = look2SpotLightParams.angle
+})
+look2LightsGUIFolder.add(look2SpotLightParams, 'height', 0, 5).name('height').onChange(() => {
+    look2SpotLight.position.y = look2SpotLightParams.height
+})
+
+look2Group.add(look2SpotLight)
+
 scene.add(look2Group)
-//scene.add(look3Group)
-//scene.add(look5Group)
 
 
 // Paths between looks
@@ -664,10 +702,8 @@ controlsGUIFolder.add(cameraControlParams, 'footstepAmplitude', 0, 100).name('fo
 controlsGUIFolder.add(cameraControlParams, 'footstepFreq', 0, 10).name('footsteps speed')
 controlsGUIFolder.add(cameraControlParams, 'initialY', 0, 1.50).name('camera height')
 
-const controls = new PointerLockControls( camera, document.body )
 controls.pointerSpeed = 0.8
 controlsGUIFolder.add(controls, 'pointerSpeed', 0.25, 5).name('sensitivity')
-
 
 const blocker = document.getElementById( 'blocker' )
 const instructions = document.getElementById( 'instructions' )
