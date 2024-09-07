@@ -140,13 +140,13 @@ introLoadingManager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
 
 // Audio 
 const audioParams = {
-    look1SongVolume: 1,
+    look1SongVolume: 0.6,
     look1Speed: 1,
-    look2SongVolume: 1,
+    look2SongVolume: 0.8,
     look2Speed: 1,
     footstepsVolume: 0.5,
-    distanceFactor: 3.5,
-    rolloffFactor: 20,
+    distanceFactor: 4,
+    rolloffFactor: 18,
     menuVolume: 0.1,
 }
 const audioGUIFolder = gui.addFolder('audio')
@@ -340,7 +340,7 @@ const look1LightsGUIFolder = lightsGUIFolder.addFolder('look 1')
 look1LightsGUIFolder.close()
 
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.005)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.05)
 scene.add(ambientLight)
 
 lightsGUIFolder.add(ambientLight, 'intensity', 0, 3).name('ambient light')
@@ -598,7 +598,7 @@ scene.add(look2Group)
 const particlePathParams = {
     density: 30,
     color: new THREE.Color(0xffffff),
-    size: 10,
+    size: 12,
     distanceFromModel: 2
 }
 
@@ -969,6 +969,7 @@ const tick = () =>
         }
     }
 
+    // Update bloom in real time, based on distance to model
     let closestDistanceToModel = 999999999 // infinity
     for (let i = 0; i < looksMeshes.length; i++) {
         const modelWorldPosition = looksMeshes[i].getWorldPosition(new THREE.Vector3())
@@ -992,6 +993,14 @@ const tick = () =>
         unrealBloomPass.radius = postprocessingParams.radius
     }
 
+    // Very basic collision detection
+    const collisionDistance = 0.4
+    const colliding = closestDistanceToModel <= collisionDistance
+    if (colliding) {
+        // If we are colliding with one of the looks, we cannot move. Therefore, we undo the step that we just did
+        controls.moveRight( velocity.x * frameElapsedTime * currentMovementSpeed )
+	    controls.moveForward( velocity.z * frameElapsedTime * currentMovementSpeed )
+    }
 
     // Detect raycast collisions
     raycaster.setFromCamera(new THREE.Vector2(0, 0), camera)
