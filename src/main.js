@@ -40,9 +40,9 @@ const cameraControlParams = {
     movementSpeed: 18,
     sprintingMovementSpeed: 27,
     velocityDecay: 0.1,
-    initialX: 27,//2,
+    initialX: 2, // group2: 27
     initialY: 0.85,
-    initialZ: 33 + 2,//-2,
+    initialZ: -2, // group2: 35
     movementCounter: 0,
     footstepAmplitude: 80,
     footstepFreq: 1.2,
@@ -53,7 +53,7 @@ const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 
 camera.position.x = cameraControlParams.initialX
 camera.position.y = cameraControlParams.initialY
 camera.position.z = cameraControlParams.initialZ
-camera.lookAt(25, 0.85, 33)
+camera.lookAt(0, 0.85, 0)
 
 // Controls
 const controls = new PointerLockControls( camera, document.body )
@@ -232,6 +232,8 @@ lowpassFilter.frequency.setValueAtTime(100, audioContext.currentTime) // Set cut
 
 // Environment
 let looksMeshes = []
+let look1 = null
+let look2 = null
 
 // Textures
 const textureLoader = new THREE.TextureLoader(introLoadingManager)
@@ -338,7 +340,7 @@ const look1LightsGUIFolder = lightsGUIFolder.addFolder('look 1')
 look1LightsGUIFolder.close()
 
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.03)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.005)
 scene.add(ambientLight)
 
 lightsGUIFolder.add(ambientLight, 'intensity', 0, 3).name('ambient light')
@@ -430,12 +432,11 @@ spotLightB.target = spotLightTargetObject
 
 look1Group.add(spotLightB)
 
-let model
 const gltf_loader = new GLTFLoader(introLoadingManager)
 gltf_loader.load('/models/look_2_pose_1.glb', function(gltf) { 
-    model = gltf.scene
+    look1 = gltf.scene
 
-    model.traverse((child) => {
+    look1.traverse((child) => {
         if (child.isMesh) {
             child.castShadow = true
             child.receiveShadow = true
@@ -444,12 +445,12 @@ gltf_loader.load('/models/look_2_pose_1.glb', function(gltf) {
         }
     })
 
-    model.position.set(0, 0.4, 0)
-    model.rotateY(Math.PI)
+    look1.position.set(0, 0.4, 0)
+    look1.rotateY(Math.PI)
 
-    model.add(positionalSound)
-    look1Group.add(model)
-    looksMeshes.push(model)
+    look1.add(positionalSound)
+    look1Group.add(look1)
+    looksMeshes.push(look1)
 })
 
 gltf_loader.load('/models/studio_light.glb', function(gltf) {
@@ -459,7 +460,7 @@ gltf_loader.load('/models/studio_light.glb', function(gltf) {
         new THREE.Vector3(1.2, 0, 0),
         new THREE.Vector3(0, 0, -1.2),
     ]
-    model = gltf.scene
+    const model = gltf.scene
     model.traverse((child) => {
         if (child.isMesh) {
             child.castShadow = true
@@ -479,7 +480,7 @@ gltf_loader.load('/models/studio_light.glb', function(gltf) {
 })
 
 gltf_loader.load('/models/pedestal.glb', function(gltf) {
-    model = gltf.scene
+    const model = gltf.scene
     model.traverse((child) => {
         if (child.isMesh) {
             child.castShadow = true
@@ -498,9 +499,9 @@ scene.add(look1Group)
 
 // Model: 
 gltf_loader.load('/models/look_1.glb', function(gltf) { 
-    model = gltf.scene
+    look2 = gltf.scene
 
-    model.traverse((child) => {
+    look2.traverse((child) => {
         if (child.isMesh) {
             child.castShadow = true
             child.receiveShadow = true
@@ -508,67 +509,87 @@ gltf_loader.load('/models/look_1.glb', function(gltf) {
             geometry.computeVertexNormals() // Calculate normals
         }
     })
-    model.scale.set(1, 1, 1)
-    model.position.set(0, 0.33, 0)
-    model.rotateY(Math.PI)
+    look2.scale.set(1, 1, 1)
+    look2.position.set(0, 0.33, 0)
+    look2.rotateY(Math.PI)
 
-    model.add(positionalSound2)
-    look2Group.add(model)
-    looksMeshes.push(model)
+    look2.add(positionalSound2)
+    look2Group.add(look2)
+    looksMeshes.push(look2)
 })
 
 // Lights:
 const look2LightsGUIFolder = lightsGUIFolder.addFolder('look 2')
 look2LightsGUIFolder.close()
 
-const look2SpotLightParams = {
-    height: 2.5,
-    intensity: 10,
-    penumbra: 0.4,
-    angle: Math.PI/4
+const look2LightsUpGUIFolder = look2LightsGUIFolder.addFolder('upper light')
+look2LightsUpGUIFolder.close()
+
+
+const look2LightsFrontGUIFolder = look2LightsGUIFolder.addFolder('front lights')
+look2LightsFrontGUIFolder.close()
+
+
+const look2SpotLightUpParams = {
+    height: 2.76,
+    intensity: 15.7,
+    penumbra: 0.45,
+    angle: 0.42
 }
 
-const look2SpotLightTargetObject = new THREE.Object3D()
-look2SpotLightTargetObject.position.set(look2Group.position)
-//scene.add(spotLightTargetObject)
-//look2Group.add(look2SpotLightTargetObject)
+const look2DirectionaLightsParams = {
+    intensity: 1.52,
+    height: 65
+}
 
 const look2spotLightColor = 0xffffff
-const look2SpotLight = new THREE.SpotLight(look2spotLightColor, 10)
+const look2SpotLightUp = new THREE.SpotLight(look2spotLightColor, look2SpotLightUpParams.intensity)
 
-look2SpotLight.angle = Math.PI / 4
-look2SpotLight.castShadow = true
-look2SpotLight.shadow.mapSize.width = 1024
-look2SpotLight.shadow.mapSize.height = 1024
-//const shadowBias = -0.01
-look2SpotLight.shadow.bias = shadowBias
+look2SpotLightUp.angle = look2SpotLightUpParams.angle
+look2SpotLightUp.castShadow = true
+look2SpotLightUp.shadow.mapSize.width = 256
+look2SpotLightUp.shadow.mapSize.height = 256
 
-look2SpotLight.shadow.camera.near = 1
-look2SpotLight.shadow.camera.far = 12
-look2SpotLight.shadow.camera.fov = 30
+look2SpotLightUp.shadow.bias = shadowBias
 
-look2SpotLight.penumbra = 0.4
-look2SpotLight.position.set(0, 2.5, 0)
+look2SpotLightUp.shadow.camera.near = 1
+look2SpotLightUp.shadow.camera.far = look2SpotLightUpParams.height + 0.1
+look2SpotLightUp.shadow.camera.fov = 20
 
-look2SpotLight.target = pedestal
+look2SpotLightUp.penumbra = look2SpotLightUpParams.penumbra
+look2SpotLightUp.position.set(0, look2SpotLightUpParams.height, 0)
 
-const look2SpotLightCameraHelper = new THREE.CameraHelper(look2SpotLight.shadow.camera)
-scene.add(look2SpotLightCameraHelper)
+look2SpotLightUp.target = pedestal
 
-look2LightsGUIFolder.add(look2SpotLightParams, 'intensity', 0, 50).name('spotlight').onChange(() => {
-    look2SpotLight.intensity = look2SpotLightParams.intensity
+//const look2SpotLightUpCameraHelper = new THREE.CameraHelper(look2SpotLightUp.shadow.camera)
+//scene.add(look2SpotLightUpCameraHelper)
+
+look2LightsUpGUIFolder.add(look2SpotLightUpParams, 'intensity', 0, 50).name('intensity').onChange(() => {look2SpotLightUp.intensity = look2SpotLightUpParams.intensity})
+look2LightsUpGUIFolder.add(look2SpotLightUpParams, 'penumbra', 0, 1).name('penumbra').onChange(() => {look2SpotLightUp.penumbra = look2SpotLightUpParams.penumbra})
+look2LightsUpGUIFolder.add(look2SpotLightUpParams, 'angle', 0, Math.PI/2).name('angle').onChange(() => {look2SpotLightUp.angle = look2SpotLightUpParams.angle})
+look2LightsUpGUIFolder.add(look2SpotLightUpParams, 'height', 0, 5).name('height').onChange(() => {look2SpotLightUp.position.y = look2SpotLightUpParams.height})
+
+look2Group.add(look2SpotLightUp)
+
+// Directional lights
+const look2SpotDirectionalLight1 = new THREE.DirectionalLight(0xffffff, look2DirectionaLightsParams.intensity)
+const look2SpotDirectionalLight2 = new THREE.DirectionalLight(0xffffff, look2DirectionaLightsParams.intensity)
+
+//look2SpotDirectionalLight.target = look2
+look2SpotDirectionalLight1.position.set(100, -look2DirectionaLightsParams.height, 100) 
+look2SpotDirectionalLight2.position.set(-100, -look2DirectionaLightsParams.height, -100) 
+
+look2LightsFrontGUIFolder.add(look2DirectionaLightsParams, 'intensity', 0, 20).name('intensity').onChange(() => {
+    look2SpotDirectionalLight1.intensity = look2DirectionaLightsParams.intensity
+    look2SpotDirectionalLight2.intensity = look2DirectionaLightsParams.intensity
 })
-look2LightsGUIFolder.add(look2SpotLightParams, 'penumbra', 0, 1).name('penumbra').onChange(() => {
-    look2SpotLight.penumbra = look2SpotLightParams.penumbra
-})
-look2LightsGUIFolder.add(look2SpotLightParams, 'angle', 0, Math.PI/2).name('angle').onChange(() => {
-    look2SpotLight.angle = look2SpotLightParams.angle
-})
-look2LightsGUIFolder.add(look2SpotLightParams, 'height', 0, 5).name('height').onChange(() => {
-    look2SpotLight.position.y = look2SpotLightParams.height
+look2LightsFrontGUIFolder.add(look2DirectionaLightsParams, 'height', 0, 100).name('depth').onChange(() => {
+    look2SpotDirectionalLight1.position.y = -look2DirectionaLightsParams.height
+    look2SpotDirectionalLight2.position.y = -look2DirectionaLightsParams.height
 })
 
-look2Group.add(look2SpotLight)
+look2Group.add(look2SpotDirectionalLight1)
+look2Group.add(look2SpotDirectionalLight2)
 
 scene.add(look2Group)
 
@@ -994,10 +1015,33 @@ const tick = () =>
         }
     }
 
-    // Adjust floor metalness
+    // Adjust floor metalness based on distance to group 2
     const group12Distance = look1Group.position.distanceTo(look2Group.position) 
     const distanceBasedMetalness = (Math.max(group12Distance/2 ,camera.position.distanceTo(look2Group.position)) -  group12Distance/2) / group12Distance * 2
-    floor.material.metalness = Math.min(0.85, distanceBasedMetalness)
+    // floor.material.metalness = Math.min(0.85, distanceBasedMetalness)
+
+    // Adjust group 2 lighting based on distance to group 2
+    // from 0 to 1.5
+    const look2GroupXZPosition = new THREE.Vector2(look2Group.position.x, look2Group.position.z)
+    const cameraXZPosition = new THREE.Vector2(camera.position.x, camera.position.z)
+    const distanceToGroup2 = cameraXZPosition.distanceTo(look2GroupXZPosition)
+
+    const closeDistanceIntensity = 4
+    const farDistanceIntensity = 12
+    if (distanceToGroup2 <= farDistanceIntensity && distanceToGroup2 > closeDistanceIntensity) {        
+        const distanceBasedIntensity = 0 + (farDistanceIntensity - distanceToGroup2) * Math.abs((0 - look2DirectionaLightsParams.intensity) / (farDistanceIntensity - closeDistanceIntensity))
+        look2SpotDirectionalLight1.intensity = distanceBasedIntensity
+        look2SpotDirectionalLight2.intensity = distanceBasedIntensity
+    } else if (distanceToGroup2 <= closeDistanceIntensity) {
+        look2SpotDirectionalLight1.intensity = look2DirectionaLightsParams.intensity
+        look2SpotDirectionalLight2.intensity = look2DirectionaLightsParams.intensity
+    } else {
+        look2SpotDirectionalLight1.intensity = 0
+        look2SpotDirectionalLight2.intensity = 0
+    }
+
+
+
 
     // Update time uniforms
     if (particlePathMaterial != null) {
