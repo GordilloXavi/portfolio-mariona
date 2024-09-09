@@ -1,0 +1,11 @@
+Model Information:
+* title:	Mid-century Ceiling Fan (game asset)
+* source:	https://sketchfab.com/3d-models/mid-century-ceiling-fan-game-asset-3f27d69fb419423c94dabac6be70f3ef
+* author:	IvanRandall (https://sketchfab.com/IvanRandall)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Mid-century Ceiling Fan (game asset)" (https://sketchfab.com/3d-models/mid-century-ceiling-fan-game-asset-3f27d69fb419423c94dabac6be70f3ef) by IvanRandall (https://sketchfab.com/IvanRandall) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

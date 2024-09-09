@@ -40,20 +40,20 @@ const cameraControlParams = {
     movementSpeed: 18,
     sprintingMovementSpeed: 27,
     velocityDecay: 0.1,
-    initialX: 2, // group2: 27
+    initialX: 2, // group1: 2 // group2: 27 // group3: 42
     initialY: 0.85,
-    initialZ: -2, // group2: 35
+    initialZ: -2, // group1: -2 // group2: 35 // group3: 58
     movementCounter: 0,
     footstepAmplitude: 80,
     footstepFreq: 1.2,
     clickDistance: 4
 }
 
-const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 500)
+const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 50)
 camera.position.x = cameraControlParams.initialX
 camera.position.y = cameraControlParams.initialY
 camera.position.z = cameraControlParams.initialZ
-camera.lookAt(0, 0.85, 0)
+camera.lookAt(0, 0.85, 0) // (0, 0.85, 0) // group3: (40, 0.85, 56)
 
 // Controls
 const controls = new PointerLockControls( camera, document.body )
@@ -164,7 +164,7 @@ let muted = false
 // load a sound and set it as the PositionalAudio object's buffer
 const audioLoader = new THREE.AudioLoader(introLoadingManager)
 
-audioLoader.load( 'sounds/kaart4.mp3', function( buffer ) {
+audioLoader.load( 'sounds/dumb_rain.mp3', function( buffer ) {
 	positionalSound.setBuffer( buffer )
 	positionalSound.setRefDistance( audioParams.distanceFactor )
     // positionalSound.setMaxDistance(1) does not work for some reason
@@ -234,6 +234,7 @@ lowpassFilter.frequency.setValueAtTime(100, audioContext.currentTime) // Set cut
 let looksMeshes = []
 let look1 = null
 let look2 = null
+let look3 = null
 
 // Textures
 const textureLoader = new THREE.TextureLoader(introLoadingManager)
@@ -310,6 +311,9 @@ const look1Group = new THREE.Group()
 const look2Group = new THREE.Group()
 look2Group.position.set(25, 0, 33)
 
+const look3Group = new THREE.Group()
+look3Group.position.set(40, 0, 56)
+
 //CRYSTAL PEDESTAL
 const pedestalMaterial = new THREE.MeshPhysicalMaterial()
 pedestalMaterial.color = new THREE.Color(0xffffff)
@@ -340,7 +344,7 @@ const look1LightsGUIFolder = lightsGUIFolder.addFolder('look 1')
 look1LightsGUIFolder.close()
 
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.05)
+const ambientLight = new THREE.AmbientLight(0xffffff, 0) // 0.05
 scene.add(ambientLight)
 
 lightsGUIFolder.add(ambientLight, 'intensity', 0, 3).name('ambient light')
@@ -561,9 +565,6 @@ look2SpotLightUp.position.set(0, look2SpotLightUpParams.height, 0)
 
 look2SpotLightUp.target = pedestal
 
-//const look2SpotLightUpCameraHelper = new THREE.CameraHelper(look2SpotLightUp.shadow.camera)
-//scene.add(look2SpotLightUpCameraHelper)
-
 look2LightsUpGUIFolder.add(look2SpotLightUpParams, 'intensity', 0, 50).name('intensity').onChange(() => {look2SpotLightUp.intensity = look2SpotLightUpParams.intensity})
 look2LightsUpGUIFolder.add(look2SpotLightUpParams, 'penumbra', 0, 1).name('penumbra').onChange(() => {look2SpotLightUp.penumbra = look2SpotLightUpParams.penumbra})
 look2LightsUpGUIFolder.add(look2SpotLightUpParams, 'angle', 0, Math.PI/2).name('angle').onChange(() => {look2SpotLightUp.angle = look2SpotLightUpParams.angle})
@@ -575,7 +576,6 @@ look2Group.add(look2SpotLightUp)
 const look2SpotDirectionalLight1 = new THREE.DirectionalLight(0xffffff, look2DirectionaLightsParams.intensity)
 const look2SpotDirectionalLight2 = new THREE.DirectionalLight(0xffffff, look2DirectionaLightsParams.intensity)
 
-//look2SpotDirectionalLight.target = look2
 look2SpotDirectionalLight1.position.set(100, -look2DirectionaLightsParams.height, 100) 
 look2SpotDirectionalLight2.position.set(-100, -look2DirectionaLightsParams.height, -100) 
 
@@ -592,6 +592,161 @@ look2Group.add(look2SpotDirectionalLight1)
 look2Group.add(look2SpotDirectionalLight2)
 
 scene.add(look2Group)
+
+
+// Look 3 group:
+// Models: 
+gltf_loader.load('/models/look_5_pose_1.glb', function(gltf) {  //look_2_pose_1 look_5_pose_1
+    look3 = gltf.scene
+
+    look3.traverse((child) => {
+        if (child.isMesh) {
+            child.castShadow = true
+            child.receiveShadow = true
+            const geometry = child.geometry
+            geometry.computeVertexNormals() // Calculate normals
+        }
+    })
+    look3.scale.set(0.85, 0.85, 0.85)
+    look3.position.set(0, 0, 0.35)
+    look3.rotateY(Math.PI/2)
+
+    //look3.add(positionalSound2)
+    look3Group.add(look3)
+    looksMeshes.push(look3)
+})
+
+let pavementFloor = null
+gltf_loader.load('/models/cracked_pavement/scene.gltf', function(gltf) { 
+    pavementFloor = gltf.scene
+
+    pavementFloor.traverse((child) => {
+        if (child.isMesh) {
+            child.receiveShadow = true
+            child.geometry.computeVertexNormals()
+        }
+    })
+    pavementFloor.scale.set(4, 4, 4)
+
+    look3Group.add(pavementFloor)
+})
+
+let fan = null
+let mixer = null
+gltf_loader.load('/models/fan/scene.gltf', function(gltf) { 
+    fan = gltf.scene
+
+    fan.traverse((child) => {
+        if (child.isMesh) {
+            child.geometry.computeVertexNormals()
+            child.material = new THREE.MeshBasicMaterial({map: child.material.map})
+            child.material.color.set(0x444444)
+        }
+    })
+    fan.scale.set(0.5, 0.5, 0.5)
+    fan.position.set(0, 1.9, 0)
+    look3Group.add(fan)
+
+    // Set up the AnimationMixer for the model
+    mixer = new THREE.AnimationMixer(fan)
+
+    // Extract the animations from the loaded model
+    const animations = gltf.animations
+
+    // Play the first animation (assuming it exists)
+    if (animations && animations.length > 0) {
+        const action = mixer.clipAction(animations[0]); // Get the first animation
+        action.play()  // Start the animation
+    }
+})
+
+// Fan light
+// Geometry for the half-sphere
+const geometry = new THREE.SphereGeometry(0.07, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2)
+const halfSphere = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: 0xffffdd }))
+halfSphere.rotateX(Math.PI)
+halfSphere.position.set(0, 1.375, 0)
+look3Group.add(halfSphere)
+
+let television = null
+gltf_loader.load('/models/tv/scene.gltf', function(gltf) { 
+    television = gltf.scene
+
+    television.traverse((child) => {
+        if (child.isMesh) {
+            child.receiveShadow = true
+            child.castShadow = true
+            child.geometry.computeVertexNormals()
+        }
+    })
+    television.position.set(3.35, 0, -0.75)
+    television.scale.set(0.5, 0.5, 0.5)
+
+    look3Group.add(television)
+})
+
+// TV screen
+const tvScreenColor = new THREE.Color(0xccffcc)
+const tvScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.18, 0.165),
+    new THREE.MeshBasicMaterial({color: tvScreenColor, transparent: true})
+)
+tvScreen.position.set(-0.097, 0.63, -0.64)
+
+look3Group.add(tvScreen)
+
+// Lights:
+const look3LightsGUIFolder = lightsGUIFolder.addFolder('look 3')
+look3LightsGUIFolder.close()
+
+const look3LightsGUIFolderFan = look3LightsGUIFolder.addFolder('fan light')
+look3LightsGUIFolderFan.close()
+
+const look3LightsGUIFolderTV = look3LightsGUIFolder.addFolder('TV light')
+look3LightsGUIFolderTV.close()
+
+// Fan light
+const look3SpotLightUpParams = {
+    height: 1.4,
+    intensity: 10,
+    penumbra: 1,
+    angle: 0.97
+}
+
+const look3SpotLightUp = new THREE.SpotLight(0xffffff, look3SpotLightUpParams.intensity)
+
+look3SpotLightUp.angle = look3SpotLightUpParams.angle
+look3SpotLightUp.castShadow = true
+look3SpotLightUp.shadow.mapSize.width = 1024
+look3SpotLightUp.shadow.mapSize.height = 1024
+
+look3SpotLightUp.shadow.camera.near = 0.1
+look3SpotLightUp.shadow.camera.far = look3SpotLightUpParams.height + 0.01
+look3SpotLightUp.shadow.camera.fov = 20
+
+look3SpotLightUp.penumbra = look3SpotLightUpParams.penumbra
+look3SpotLightUp.position.set(0, look3SpotLightUpParams.height, 0)
+
+const look3SpotLightUpTarget = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial())
+look3SpotLightUpTarget.visible = false
+
+look3Group.add(look3SpotLightUpTarget)
+look3SpotLightUp.target = look3SpotLightUpTarget// = look3SpotLightUpTarget// = 
+
+//const helper = new THREE.CameraHelper(look3SpotLightUp.shadow.camera)
+//scene.add(helper)
+
+look3LightsGUIFolderFan.add(look3SpotLightUpParams, 'intensity', 0, 50).name('intensity').onChange(() => {look3SpotLightUp.intensity = look3SpotLightUpParams.intensity})
+look3LightsGUIFolderFan.add(look3SpotLightUpParams, 'penumbra', 0, 1).name('penumbra').onChange(() => {look3SpotLightUp.penumbra = look3SpotLightUpParams.penumbra})
+look3LightsGUIFolderFan.add(look3SpotLightUpParams, 'angle', 0, Math.PI/2).name('angle').onChange(() => {look3SpotLightUp.angle = look3SpotLightUpParams.angle})
+look3LightsGUIFolderFan.add(look3SpotLightUpParams, 'height', 0, 5).name('height').onChange(() => {look3SpotLightUp.position.y = look3SpotLightUpParams.height})
+
+look3Group.add(look3SpotLightUp)
+
+// TODO: TV screen light
+// ...
+
+scene.add(look3Group)
 
 
 // Paths between looks
@@ -679,8 +834,9 @@ const createParticlePath = (position1, position2) => {
     return new THREE.Points(geometry, particlePathMaterial)
 }
 
-let path = createParticlePath(look1Group.position, look2Group.position)
-scene.add(path)
+let pathGroup12 = createParticlePath(look1Group.position, look2Group.position)
+scene.add(pathGroup12)
+
 
 window.addEventListener('resize', () =>
 {
@@ -1050,11 +1206,15 @@ const tick = () =>
     }
 
 
-
-
     // Update time uniforms
     if (particlePathMaterial != null) {
         particlePathMaterial.uniforms.uTime.value = timer.getElapsed()
+    }
+
+    // Update the animation mixer if it exists
+    if (mixer) {
+        const delta = timer.getDelta() 
+        mixer.update(delta/ 1.5)
     }
     
 

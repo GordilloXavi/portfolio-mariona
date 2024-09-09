@@ -1,0 +1,11 @@
+Model Information:
+* title:	Cracked Pavement Decal
+* source:	https://sketchfab.com/3d-models/cracked-pavement-decal-e9ca7339b35d4483b256778e0cd46d2c
+* author:	Yggr (https://sketchfab.com/kiryshin)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Cracked Pavement Decal" (https://sketchfab.com/3d-models/cracked-pavement-decal-e9ca7339b35d4483b256778e0cd46d2c) by Yggr (https://sketchfab.com/kiryshin) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
