@@ -40,9 +40,9 @@ const cameraControlParams = {
     movementSpeed: 18,
     sprintingMovementSpeed: 27,
     velocityDecay: 0.1,
-    initialX: 2, // group1: 2 // group2: 27 // group3: 42
+    initialX: 42, // group1: 2 // group2: 27 // group3: 42
     initialY: 0.85,
-    initialZ: -2, // group1: -2 // group2: 35 // group3: 58
+    initialZ: 58, // group1: -2 // group2: 35 // group3: 58
     movementCounter: 0,
     footstepAmplitude: 80,
     footstepFreq: 1.2,
@@ -148,8 +148,10 @@ introLoadingManager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
 const audioParams = {
     look1SongVolume: 0.6,
     look1Speed: 1,
-    look2SongVolume: 0.8,
+    look2SongVolume: 0.5,
     look2Speed: 1,
+    look3SongVolume: 2,
+    look3Speed: 1,
     footstepsVolume: 0.5,
     distanceFactor: 4,
     rolloffFactor: 18,
@@ -164,6 +166,7 @@ camera.add( audioListener )
 
 const positionalSound = new THREE.PositionalAudio(audioListener)
 const positionalSound2 = new THREE.PositionalAudio(audioListener)
+const positionalSound3 = new THREE.PositionalAudio(audioListener)
 
 let muted = false
 
@@ -198,6 +201,21 @@ audioLoader.load( 'sounds/river.mp3', function( buffer ) {
     })
     audioGUIFolder.add(audioParams, 'look2Speed', 0, 3).name('look 2 playback speed').onChange(() => {
         positionalSound2.setPlaybackRate(audioParams.look2Speed)
+    })
+})
+
+audioLoader.load( 'sounds/searchboat_filtered.mp3', function( buffer ) {
+	positionalSound3.setBuffer( buffer )
+	positionalSound3.setRefDistance( audioParams.distanceFactor )
+    // positionalSound3.setMaxDistance(1) // does not work for some reason
+    positionalSound3.setRolloffFactor(audioParams.rolloffFactor)
+    positionalSound3.setLoop(true)
+    positionalSound3.setVolume(audioParams.look3SongVolume)    
+    audioGUIFolder.add(audioParams, 'look3SongVolume', 0, 1).name('look 3 music volume').onChange(() => {
+        positionalSound3.setVolume(audioParams.look3SongVolume)
+    })
+    audioGUIFolder.add(audioParams, 'look3Speed', 0, 3).name('look 3 playback speed').onChange(() => {
+        positionalSound3.setPlaybackRate(audioParams.look3Speed)
     })
 })
 
@@ -607,7 +625,7 @@ scene.add(look2Group)
 
 // Look 3 group:
 // Models: 
-gltf_loader.load('/models/look_5_pose_1.glb', function(gltf) {  //look_2_pose_1 look_5_pose_1
+gltf_loader.load('/models/look_5_pose_1.glb', function(gltf) {
     look3 = gltf.scene
 
     look3.traverse((child) => {
@@ -622,7 +640,6 @@ gltf_loader.load('/models/look_5_pose_1.glb', function(gltf) {  //look_2_pose_1 
     look3.position.set(0, -0.04, 0.35)
     look3.rotateY(Math.PI/2)
 
-    //look3.add(positionalSound2)
     look3Group.add(look3)
     looksMeshes.push(look3)
 })
@@ -638,6 +655,7 @@ gltf_loader.load('/models/cracked_pavement/scene.gltf', function(gltf) {
         }
     })
     pavementFloor.scale.set(4, 4, 4)
+    pavementFloor.rotateY(-Math.PI/2)
 
     look3Group.add(pavementFloor)
 })
@@ -702,9 +720,24 @@ const tvScreen = new THREE.Mesh(
     new THREE.PlaneGeometry(0.18, 0.165),
     new THREE.MeshBasicMaterial({color: tvScreenColor, transparent: true})
 )
+tvScreen.add(positionalSound3)
 tvScreen.position.set(-0.097, 0.63, -0.64)
 
 look3Group.add(tvScreen)
+
+gltf_loader.load('/models/rug/scene.gltf', function(gltf) { 
+    const rug = gltf.scene
+
+    rug.traverse((child) => {
+        if (child.isMesh) {
+            child.receiveShadow = true
+            child.geometry.computeVertexNormals()
+        }
+    })
+    rug.scale.set(1, 1, 1)
+    rug.position.set(0, 0.001, -0.8)
+    look3Group.add(rug)
+})
 
 // Lights:
 const look3LightsGUIFolder = lightsGUIFolder.addFolder('look 3')
@@ -931,12 +964,15 @@ controls.addEventListener( 'lock', function () {
     if (!muted) {
         positionalSound.play()
         positionalSound2.play()
+        positionalSound3.play()
     }
     positionalSound.setFilter(null)
     positionalSound2.setFilter(null)
+    positionalSound3.setFilter(null)
 
     positionalSound.setVolume(audioParams.look1SongVolume)
     positionalSound2.setVolume(audioParams.look2SongVolume)
+    positionalSound3.setVolume(audioParams.look3SongVolume)
 
     for (let i = 0; i < footsteps.audios.length; i++) footsteps.audios[i].setFilter(null)
 } )
@@ -947,9 +983,11 @@ controls.addEventListener( 'unlock', function () {
     gui.show()
     positionalSound.setFilter(lowpassFilter)
     positionalSound2.setFilter(lowpassFilter)
+    positionalSound3.setFilter(lowpassFilter)
 
     positionalSound.setVolume(audioParams.menuVolume)
     positionalSound2.setVolume(audioParams.menuVolume)
+    positionalSound3.setVolume(audioParams.menuVolume)
 
     for (let i = 0; i < footsteps.audios.length; i++) footsteps.audios[i].setFilter(lowpassFilter)
 } )
@@ -1027,10 +1065,12 @@ const onKeyPress = function (event) {
         if (positionalSound.isPlaying) {
             positionalSound.pause()
             positionalSound2.pause()
+            positionalSound3.pause()
             muted = true
         } else {
             positionalSound.play()
             positionalSound2.play()
+            positionalSound3.play()
             muted = false
         }
     }
@@ -1260,9 +1300,11 @@ const tick = () =>
     if (decimalPart < flickerSpeed) { 
         if (look3SpotLightTV.intensity == 0) {
             look3SpotLightTV.intensity = 4
+            look3SpotLightUp.intensity = look3SpotLightUpParams.intensity / 1.1
             tvScreen.material.opacity = 0.9
         } else {
             look3SpotLightTV.intensity = 0
+            look3SpotLightUp.intensity = look3SpotLightUpParams.intensity
             tvScreen.material.opacity = 0.01
 
         }

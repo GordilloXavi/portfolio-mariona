@@ -1,0 +1,11 @@
+Model Information:
+* title:	RUG with Bottom
+* source:	https://sketchfab.com/3d-models/rug-with-bottom-43b311e5a2714126bf0134e8555d40cc
+* author:	luke_gibbs (https://sketchfab.com/gibbsluke)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "RUG with Bottom" (https://sketchfab.com/3d-models/rug-with-bottom-43b311e5a2714126bf0134e8555d40cc) by luke_gibbs (https://sketchfab.com/gibbsluke) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
