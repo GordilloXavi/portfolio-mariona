@@ -350,10 +350,15 @@ const look1LightsGUIFolder = lightsGUIFolder.addFolder('look 1')
 look1LightsGUIFolder.close()
 
 // Ambient light
-const ambientLight = new THREE.AmbientLight(0xffffff, 0) // 0.05
+const ambientLightParams = {
+    intensity: 0.07
+}
+const ambientLight = new THREE.AmbientLight(0xffffff, ambientLightParams.intensity)
 scene.add(ambientLight)
 
-lightsGUIFolder.add(ambientLight, 'intensity', 0, 3).name('ambient light')
+lightsGUIFolder.add(ambientLightParams, 'intensity', 0, 3).name('ambient light intensity').onChange(() => {
+    ambientLight.intensity = ambientLightParams.intensity
+})
 
 const spotLightTargetObject = new THREE.Object3D()
 spotLightTargetObject.position.set(0, 1, 0)
@@ -714,7 +719,7 @@ look3LightsGUIFolderTV.close()
 // Fan light
 const look3SpotLightUpParams = {
     height: 1.4,
-    intensity: 7,
+    intensity: 5,
     penumbra: 1,
     angle: 0.97
 }
@@ -774,10 +779,6 @@ look3Group.add(look3SpotLightTV)
 
 //const look3SpotLightTVHelper = new THREE.SpotLightHelper(look3SpotLightTV)
 //scene.add(look3SpotLightTVHelper)
-
-gui.add(look3SpotLightTV.position, 'x', -2,2).onChange(() => {look3SpotLightTVHelper.update()})
-gui.add(look3SpotLightTV.position, 'y', -2,2).onChange(() => {look3SpotLightTVHelper.update()})
-gui.add(look3SpotLightTV.position, 'z', -2,2).onChange(() => {look3SpotLightTVHelper.update()})
 
 scene.add(look3Group)
 
@@ -1238,12 +1239,27 @@ const tick = () =>
         look2SpotDirectionalLight2.intensity = 0
     }
 
+    // Adjust group 3 ambient light based on distance to group 3
+    const look3GroupXZPosition = new THREE.Vector2(look3Group.position.x, look3Group.position.z)
+    const distanceToGroup3 = cameraXZPosition.distanceTo(look3GroupXZPosition)
+
+    const farDistanceAmbientLightIntensity = 20
+    const closeDistanceAmbientLightIntensity = 15
+    if (distanceToGroup3 <= farDistanceAmbientLightIntensity && distanceToGroup3 > closeDistanceAmbientLightIntensity) {        
+        const distanceBasedIntensity =  ambientLightParams.intensity - (farDistanceAmbientLightIntensity - distanceToGroup3) * Math.abs(ambientLightParams.intensity / (farDistanceAmbientLightIntensity - closeDistanceAmbientLightIntensity))
+        ambientLight.intensity = distanceBasedIntensity
+    } else if (distanceToGroup3 <= closeDistanceAmbientLightIntensity) {
+        ambientLight.intensity = 0
+    } else {
+        ambientLight.intensity = ambientLightParams.intensity 
+    }
+
     // Group 3 TV flicker
     const decimalPart = ( ( timer.getElapsed() - Math.trunc(timer.getElapsed()) ) * 1000 ) % 10
     const flickerSpeed = 0.9
     if (decimalPart < flickerSpeed) { 
         if (look3SpotLightTV.intensity == 0) {
-            look3SpotLightTV.intensity = 3
+            look3SpotLightTV.intensity = 4
             tvScreen.material.opacity = 0.9
         } else {
             look3SpotLightTV.intensity = 0
@@ -1251,7 +1267,6 @@ const tick = () =>
 
         }
     }
-
 
     // Update time uniforms
     if (particlePathMaterial != null) {
