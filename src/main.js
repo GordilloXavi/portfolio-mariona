@@ -40,20 +40,26 @@ const cameraControlParams = {
     movementSpeed: 18,
     sprintingMovementSpeed: 27,
     velocityDecay: 0.1,
-    initialX: 2, // group1: 2 // group2: 27 // group3: 42
+    initialX: 42, // group1: 2 // group2: 27 // group3: 42
     initialY: 0.85,
-    initialZ: -2, // group1: -2 // group2: 35 // group3: 58
+    initialZ: 58, // group1: -2 // group2: 35 // group3: 58
     movementCounter: 0,
     footstepAmplitude: 80,
     footstepFreq: 1.2,
-    clickDistance: 4
+    clickDistance: 4,
+    renderDistance: 500 // default 50
 }
 
-const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 50)
+const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, cameraControlParams.renderDistance)
+gui.add(cameraControlParams, 'renderDistance', 10, 500).name('render distance').onChange(() => {
+    camera.far = cameraControlParams.renderDistance
+    camera.updateProjectionMatrix()
+})
+
 camera.position.x = cameraControlParams.initialX
 camera.position.y = cameraControlParams.initialY
 camera.position.z = cameraControlParams.initialZ
-camera.lookAt(0, 0.85, 0) // (0, 0.85, 0) // group3: (40, 0.85, 56)
+camera.lookAt(40, 0.85, 56) // group1: (0, 0.85, 0) // group3: (40, 0.85, 56)
 
 // Controls
 const controls = new PointerLockControls( camera, document.body )
@@ -608,7 +614,7 @@ gltf_loader.load('/models/look_5_pose_1.glb', function(gltf) {  //look_2_pose_1 
         }
     })
     look3.scale.set(0.85, 0.85, 0.85)
-    look3.position.set(0, 0, 0.35)
+    look3.position.set(0, -0.04, 0.35)
     look3.rotateY(Math.PI/2)
 
     //look3.add(positionalSound2)
@@ -708,7 +714,7 @@ look3LightsGUIFolderTV.close()
 // Fan light
 const look3SpotLightUpParams = {
     height: 1.4,
-    intensity: 10,
+    intensity: 7,
     penumbra: 1,
     angle: 0.97
 }
@@ -743,8 +749,35 @@ look3LightsGUIFolderFan.add(look3SpotLightUpParams, 'height', 0, 5).name('height
 
 look3Group.add(look3SpotLightUp)
 
-// TODO: TV screen light
-// ...
+// TV screen light
+const look3SpotLightTV = new THREE.SpotLight(tvScreenColor, 30)
+look3SpotLightTV.position.set(-0.1, 0.66, -0.66)
+
+look3SpotLightTV.angle = 0.85
+look3SpotLightTV.castShadow = true
+look3SpotLightTV.shadow.mapSize.width = 512
+look3SpotLightTV.shadow.mapSize.height = 512
+
+look3SpotLightTV.shadow.camera.near = 0.1
+look3SpotLightTV.shadow.camera.far = 3
+look3SpotLightTV.shadow.camera.fov = 20
+look3SpotLightTV.penumbra = 1
+
+
+const look3SpotLightTVTarget = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial())
+look3SpotLightTVTarget.position.set(look3SpotLightTV.position.x, look3SpotLightTV.position.y, 0)
+look3SpotLightTVTarget.visible = false
+look3Group.add(look3SpotLightTVTarget)
+look3SpotLightTV.target = look3SpotLightTVTarget
+
+look3Group.add(look3SpotLightTV)
+
+//const look3SpotLightTVHelper = new THREE.SpotLightHelper(look3SpotLightTV)
+//scene.add(look3SpotLightTVHelper)
+
+gui.add(look3SpotLightTV.position, 'x', -2,2).onChange(() => {look3SpotLightTVHelper.update()})
+gui.add(look3SpotLightTV.position, 'y', -2,2).onChange(() => {look3SpotLightTVHelper.update()})
+gui.add(look3SpotLightTV.position, 'z', -2,2).onChange(() => {look3SpotLightTVHelper.update()})
 
 scene.add(look3Group)
 
@@ -1203,6 +1236,20 @@ const tick = () =>
     } else {
         look2SpotDirectionalLight1.intensity = 0
         look2SpotDirectionalLight2.intensity = 0
+    }
+
+    // Group 3 TV flicker
+    const decimalPart = ( ( timer.getElapsed() - Math.trunc(timer.getElapsed()) ) * 1000 ) % 10
+    const flickerSpeed = 0.9
+    if (decimalPart < flickerSpeed) { 
+        if (look3SpotLightTV.intensity == 0) {
+            look3SpotLightTV.intensity = 3
+            tvScreen.material.opacity = 0.9
+        } else {
+            look3SpotLightTV.intensity = 0
+            tvScreen.material.opacity = 0.01
+
+        }
     }
 
 
