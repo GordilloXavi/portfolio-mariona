@@ -40,9 +40,9 @@ const cameraControlParams = {
     movementSpeed: 18,
     sprintingMovementSpeed: 27,
     velocityDecay: 0.1,
-    initialX: 42, // group1: 2 // group2: 27 // group3: 42
+    initialX: 2, // group1: 2 // group2: 27 // group3: 42
     initialY: 0.85,
-    initialZ: 58, // group1: -2 // group2: 35 // group3: 58
+    initialZ: -2, // group1: -2 // group2: 35 // group3: 58
     movementCounter: 0,
     footstepAmplitude: 80,
     footstepFreq: 1.2,
@@ -59,7 +59,7 @@ gui.add(cameraControlParams, 'renderDistance', 10, 500).name('render distance').
 camera.position.x = cameraControlParams.initialX
 camera.position.y = cameraControlParams.initialY
 camera.position.z = cameraControlParams.initialZ
-camera.lookAt(40, 0.85, 56) // group1: (0, 0.85, 0) // group3: (40, 0.85, 56)
+camera.lookAt(0, 0.85, 0) // group1: (0, 0.85, 0) // group3: (40, 0.85, 56)
 
 // Controls
 const controls = new PointerLockControls( camera, document.body )
