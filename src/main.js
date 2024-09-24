@@ -40,9 +40,9 @@ const cameraControlParams = {
     movementSpeed: 18,
     sprintingMovementSpeed: 27,
     velocityDecay: 0.1,
-    initialX: 42, // group1: 2 // group2: 27 // group3: 42
+    initialX: 2, // group1: 2 // group2: 27 // group3: 42
     initialY: 0.85,
-    initialZ: 58, // group1: -2 // group2: 35 // group3: 58
+    initialZ: -2, // group1: -2 // group2: 35 // group3: 58
     movementCounter: 0,
     footstepAmplitude: 80,
     footstepFreq: 1.2,
@@ -86,7 +86,7 @@ const introLoadingManager = new THREE.LoadingManager()
 const scene = new THREE.Scene()
 
 // Fog
-const fog = new THREE.FogExp2(0x000000, 0.07)
+const fog = new THREE.FogExp2(0x000000, 0) // 0.07 default
 scene.fog = fog
 gui.add(fog, 'density', 0, 0.6).name('fog density')
 
@@ -148,11 +148,11 @@ introLoadingManager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
 const audioParams = {
     look1SongVolume: 0.6,
     look1Speed: 1,
-    look2SongVolume: 0.5,
+    look2SongVolume: 0.35,
     look2Speed: 1,
     look3SongVolume: 2,
     look3Speed: 1,
-    footstepsVolume: 0.5,
+    footstepsVolume: 0.4,
     distanceFactor: 4,
     rolloffFactor: 18,
     menuVolume: 0.1,
@@ -246,6 +246,13 @@ for (let i = 0; i < footsteps.paths.length; i++) {
         footsteps.audios[i].setVolume(audioParams.footstepsVolume)
     })
 }
+const breathingAudio = new THREE.Audio( audioListener )
+audioLoader.load('sounds/breathing.mp3', function( buffer ) { 
+    breathingAudio.setBuffer( buffer )
+    breathingAudio.setLoop(false)
+    breathingAudio.setVolume(0.07)
+})
+
 
 const audioContext = audioListener.context
 
@@ -903,6 +910,8 @@ const createParticlePath = (position1, position2) => {
 
 let pathGroup12 = createParticlePath(look1Group.position, look2Group.position)
 scene.add(pathGroup12)
+//let pathGroup23 = createParticlePath(look2Group.position, look3Group.position)
+//scene.add(pathGroup23)
 
 
 window.addEventListener('resize', () =>
@@ -933,6 +942,8 @@ let moveBackward = false
 let moveLeft = false
 let moveRight = false
 let sprinting = false
+let justBeganSprinting = false
+let sprintTime = 0
 const velocity = new THREE.Vector3()
 const direction = new THREE.Vector3()
 
@@ -1019,6 +1030,7 @@ const onKeyDown = function ( event ) {
         case 'ShiftRight':
         case 'ShiftLeft':
             sprinting = true
+            justBeganSprinting = true
             break
     }
 }
@@ -1160,6 +1172,14 @@ const tick = () =>
     const frameElapsedTime = timer.getDelta()
     const currentMovementSpeed = sprinting ? cameraControlParams.sprintingMovementSpeed : cameraControlParams.movementSpeed
 
+    if (justBeganSprinting) {
+        sprintTime = 0
+        justBeganSprinting = false
+    }
+    if (sprinting) {
+        sprintTime += timer.getDelta()
+    }
+
     // Controls:
     velocity.x -= velocity.x * frameElapsedTime * 1/cameraControlParams.velocityDecay
 	velocity.z -= velocity.z * frameElapsedTime * 1/cameraControlParams.velocityDecay
@@ -1186,6 +1206,10 @@ const tick = () =>
                 footsteps.audios[footsteps.currentIndex].play()
                 footsteps.currentIndex = (footsteps.currentIndex + 1) % footsteps.audios.length
             }
+        }
+        // breathing sound
+        if (sprinting && sprintTime > 3 && !breathingAudio.isPlaying) {
+            breathingAudio.play()
         }
         camera.position.y = cameraControlParams.initialY + footstepHeight
     } else {
