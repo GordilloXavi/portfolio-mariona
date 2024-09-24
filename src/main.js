@@ -86,7 +86,7 @@ const introLoadingManager = new THREE.LoadingManager()
 const scene = new THREE.Scene()
 
 // Fog
-const fog = new THREE.FogExp2(0x000000, 0) // 0.07 default
+const fog = new THREE.FogExp2(0x000000, 0.07) // 0.07 default
 scene.fog = fog
 gui.add(fog, 'density', 0, 0.6).name('fog density')
 
