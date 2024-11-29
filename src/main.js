@@ -148,7 +148,7 @@ introLoadingManager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
 const audioParams = {
     look1SongVolume: 0.6,
     look1Speed: 1,
-    look2SongVolume: 0.35,
+    look2SongVolume: 0.20,
     look2Speed: 1,
     look3SongVolume: 2,
     look3Speed: 1,
@@ -250,7 +250,7 @@ const breathingAudio = new THREE.Audio( audioListener )
 audioLoader.load('sounds/breathing.mp3', function( buffer ) { 
     breathingAudio.setBuffer( buffer )
     breathingAudio.setLoop(false)
-    breathingAudio.setVolume(0.07)
+    breathingAudio.setVolume(0.15)
 })
 
 
@@ -842,7 +842,6 @@ function randomNormal(mean = 0, standardDeviation = 1) {
     return z0 * standardDeviation + mean;
 }
 
-let particlePathMaterial = null
 const createParticlePath = (position1, position2) => {
     const distance = position1.distanceTo(position2)
     const particleCount = Math.floor(particlePathParams.density * distance)
@@ -863,25 +862,28 @@ const createParticlePath = (position1, position2) => {
         const origin = new THREE.Vector3(position1.x, position1.y, position1.z)
         const destination = new THREE.Vector3(position2.x, position2.y, position2.z)
 
-        const i3 = i * 3
-        let x = origin.x + Math.random() * (origin.x - destination.x)
-        const distanceProportion =  x / (origin.x - destination.x)
-        let y = origin.y + (origin.y - destination.y) * distanceProportion + cameraControlParams.initialY / 1.7
-        let z = origin.z + (origin.z - destination.z) * distanceProportion
+        const t = Math.random()
+    
+        // Interpolate between the two points
+        const particlePosition = new THREE.Vector3(
+            origin.x + t * (destination.x - origin.x),
+            origin.y + t * (destination.y - origin.y) + cameraControlParams.initialY / 1.7,
+            origin.z + t * (destination.z - origin.z)
+        )
 
-        x = -x + randomNormal(0, 0.1)
-        y = y + randomNormal(0, 0.1)
-        z = -z + randomNormal(0, 0.1)
-
-        const particlePosition = new THREE.Vector3(x, y, z)
         // FIXME / TODO: this is an awful way to make the particles near the groups disappear. 
         if (particlePosition.distanceTo(origin) < particlePathParams.distanceFromModel || particlePosition.distanceTo(destination) < particlePathParams.distanceFromModel) {
-            y = -1
+            particlePosition.y = -100
         }
 
-        positions[i3] = x
-        positions[i3 + 1] = y
-        positions[i3 + 2] = z
+        particlePosition.x = particlePosition.x + randomNormal(0, 0.1)
+        particlePosition.y = particlePosition.y + randomNormal(0, 0.1)
+        particlePosition.z = particlePosition.z + randomNormal(0, 0.1)
+
+        const i3 = i * 3
+        positions[i3] = particlePosition.x
+        positions[i3 + 1] = particlePosition.y
+        positions[i3 + 2] = particlePosition.z
 
         // Set scale
         scales[i] = (particlePathParams.size + (0.5 - Math.random()) * particlePathParams.size) * renderer.getPixelRatio() / 2
@@ -890,7 +892,7 @@ const createParticlePath = (position1, position2) => {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
     geometry.setAttribute('aScale', new THREE.BufferAttribute(scales, 1))
 
-    particlePathMaterial = new THREE.ShaderMaterial({
+    const particlePathMaterial = new THREE.ShaderMaterial({
         depthWrite: true,
         blending: THREE.AdditiveBlending,
         vertexColors: true,
@@ -910,8 +912,8 @@ const createParticlePath = (position1, position2) => {
 
 let pathGroup12 = createParticlePath(look1Group.position, look2Group.position)
 scene.add(pathGroup12)
-//let pathGroup23 = createParticlePath(look2Group.position, look3Group.position)
-//scene.add(pathGroup23)
+let pathGroup23 = createParticlePath(look2Group.position, look3Group.position)
+scene.add(pathGroup23)
 
 
 window.addEventListener('resize', () =>
@@ -1335,8 +1337,12 @@ const tick = () =>
     }
 
     // Update time uniforms
-    if (particlePathMaterial != null) {
-        particlePathMaterial.uniforms.uTime.value = timer.getElapsed()
+    if (pathGroup12.material != null) {
+        pathGroup12.material.uniforms.uTime.value = timer.getElapsed()
+    }
+
+    if (pathGroup23.material != null) {
+        pathGroup23.material.uniforms.uTime.value = timer.getElapsed()
     }
 
     // Update the animation mixer if it exists
